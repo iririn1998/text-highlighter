@@ -20,22 +20,19 @@
   opacity: 0.9;
 }
 
-/* アニメーション */
-@keyframes highlightAdded {
-  0% {
-    opacity: 0;
-    transform: scale(0.98);
-  }
-  50% {
-    opacity: 1;
-    transform: scale(1.02);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
+/* カラー別のハイライトスタイル */
+.highlight-yellow {
+  background-color: #fff59d;
 }
 
-.text-highlight.newly-added {
-  animation: highlightAdded 0.3s ease-out;
+.highlight-green {
+  background-color: #a5d6a7;
+}
+
+.highlight-red {
+  background-color: #ef5350;
+}
+
+.highlight-blue {
+  background-color: #90caf9;
 }
