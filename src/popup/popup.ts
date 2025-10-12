@@ -11,7 +11,7 @@ const STORAGE_KEY = 'text-highlighter-data';
 /**
  * 現在選択されている色を取得
  */
-async function getSelectedColor(): Promise<string> {
+const getSelectedColor = async (): Promise<string> => {
   try {
     const result = await chrome.storage.sync.get(STORAGE_KEY);
     const data = result[STORAGE_KEY] as StorageData | undefined;
@@ -20,12 +20,12 @@ async function getSelectedColor(): Promise<string> {
     console.error(error);
     return DEFAULT_COLOR;
   }
-}
+};
 
 /**
  * 色を保存
  */
-async function saveSelectedColor(color: string): Promise<void> {
+const saveSelectedColor = async (color: string): Promise<void> => {
   try {
     const result = await chrome.storage.sync.get(STORAGE_KEY);
     const data = (result[STORAGE_KEY] as StorageData) || {
@@ -39,12 +39,12 @@ async function saveSelectedColor(color: string): Promise<void> {
   } catch (error) {
     console.error(error);
   }
-}
+};
 
 /**
  * UIを初期化
  */
-async function initializeUI(): Promise<void> {
+const initializeUI = async (): Promise<void> => {
   const currentColor = await getSelectedColor();
 
   // カラーボタンを作成
@@ -85,7 +85,7 @@ async function initializeUI(): Promise<void> {
 
     colorGrid.appendChild(button);
   }
-}
+};
 
 /**
  * 初期化

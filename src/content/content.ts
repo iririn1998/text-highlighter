@@ -14,7 +14,7 @@ const HIGHLIGHT_ATTR = 'data-highlight-id';
 /**
  * XPathを生成する関数
  */
-function getXPath(node: Node): string {
+const getXPath = (node: Node): string => {
   if (node.nodeType === Node.DOCUMENT_NODE) {
     return '/';
   }
@@ -32,12 +32,12 @@ function getXPath(node: Node): string {
       .indexOf(node as ChildNode) + 1;
 
   return `${parentPath}/${node.nodeName.toLowerCase()}[${index}]`;
-}
+};
 
 /**
  * XPathから要素を取得する関数
  */
-function getElementByXPath(xpath: string): Node | null {
+const getElementByXPath = (xpath: string): Node | null => {
   const result = document.evaluate(
     xpath,
     document,
@@ -46,12 +46,12 @@ function getElementByXPath(xpath: string): Node | null {
     null,
   );
   return result.singleNodeValue;
-}
+};
 
 /**
  * 現在選択されている色を取得
  */
-async function getSelectedColor(): Promise<string> {
+const getSelectedColor = async (): Promise<string> => {
   try {
     const result = await chrome.storage.sync.get(STORAGE_KEY);
     const data = result[STORAGE_KEY] as StorageData | undefined;
@@ -60,12 +60,12 @@ async function getSelectedColor(): Promise<string> {
     console.error('色の取得エラー:', error);
     return DEFAULT_COLOR;
   }
-}
+};
 
 /**
  * ハイライトを保存
  */
-async function saveHighlight(highlight: HighlightData): Promise<void> {
+const saveHighlight = async (highlight: HighlightData): Promise<void> => {
   try {
     const result = await chrome.storage.sync.get(STORAGE_KEY);
     const data = (result[STORAGE_KEY] as StorageData) || {
@@ -80,12 +80,12 @@ async function saveHighlight(highlight: HighlightData): Promise<void> {
   } catch (error) {
     console.error('ハイライト保存エラー:', error);
   }
-}
+};
 
 /**
  * ハイライトを削除
  */
-async function removeHighlight(id: string): Promise<void> {
+const removeHighlight = async (id: string): Promise<void> => {
   try {
     const result = await chrome.storage.sync.get(STORAGE_KEY);
     const data = result[STORAGE_KEY] as StorageData | undefined;
@@ -98,12 +98,12 @@ async function removeHighlight(id: string): Promise<void> {
   } catch (error) {
     console.error('ハイライト削除エラー:', error);
   }
-}
+};
 
 /**
  * ハイライトを復元
  */
-async function restoreHighlights(): Promise<void> {
+const restoreHighlights = async (): Promise<void> => {
   try {
     const result = await chrome.storage.sync.get(STORAGE_KEY);
     const data = result[STORAGE_KEY] as StorageData | undefined;
@@ -123,12 +123,12 @@ async function restoreHighlights(): Promise<void> {
   } catch (error) {
     console.error('ハイライト復元エラー:', error);
   }
-}
+};
 
 /**
  * 保存されたデータからハイライトを適用
  */
-function applyHighlightFromData(highlight: HighlightData): void {
+const applyHighlightFromData = (highlight: HighlightData): void => {
   try {
     const node = getElementByXPath(highlight.xpath);
     if (!node || node.nodeType !== Node.TEXT_NODE) {
@@ -160,12 +160,12 @@ function applyHighlightFromData(highlight: HighlightData): void {
   } catch (error) {
     console.error('ハイライト適用エラー:', error);
   }
-}
+};
 
 /**
  * 選択範囲にハイライトを適用
  */
-async function applyHighlight(): Promise<void> {
+const applyHighlight = async (): Promise<void> => {
   const selection = window.getSelection();
   if (!selection || selection.rangeCount === 0) {
     return;
@@ -218,12 +218,12 @@ async function applyHighlight(): Promise<void> {
   } catch (error) {
     console.error('ハイライト追加エラー:', error);
   }
-}
+};
 
 /**
  * ハイライトのダブルクリック処理
  */
-async function handleHighlightDoubleClick(event: Event): Promise<void> {
+const handleHighlightDoubleClick = async (event: Event): Promise<void> => {
   const target = event.target as HTMLElement;
   const highlightId = target.getAttribute(HIGHLIGHT_ATTR);
 
@@ -245,7 +245,7 @@ async function handleHighlightDoubleClick(event: Event): Promise<void> {
   }
 
   console.log('ハイライトを削除しました:', highlightId);
-}
+};
 
 /**
  * メッセージリスナー
@@ -267,7 +267,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
 /**
  * 初期化
  */
-function initialize(): void {
+const initialize = (): void => {
   console.log('Text Highlighter: コンテンツスクリプト読み込み完了');
 
   // ページ読み込み後にハイライトを復元
@@ -276,7 +276,7 @@ function initialize(): void {
   } else {
     restoreHighlights();
   }
-}
+};
 
 // 初期化実行
 initialize();
