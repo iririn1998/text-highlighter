@@ -3,10 +3,12 @@
  * カラー選択UIの制御を担当
  */
 
+import {
+  DEFAULT_COLOR,
+  DEFAULT_COLORS,
+  STORAGE_KEY,
+} from '../shared/constants';
 import type { StorageData } from '../shared/types';
-import { DEFAULT_COLOR, DEFAULT_COLORS } from '../shared/types';
-
-const STORAGE_KEY = 'text-highlighter-data';
 
 /**
  * 現在選択されている色を取得
