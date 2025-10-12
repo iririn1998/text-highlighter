@@ -66,6 +66,11 @@ const applyColor = async (id: ColorOption['id']) => {
     span.style.backgroundColor = color.value;
     span.className = `${color.class}`;
     range.surroundContents(span);
+
+    // span内が空の場合は削除
+    if (!span.textContent?.trim()) {
+      span.remove();
+    }
   } catch {
     // 複数の要素にまたがる場合は、各テキストノードを個別に処理
     const textNodes = getTextNodesInRange(range);
@@ -91,6 +96,11 @@ const applyColor = async (id: ColorOption['id']) => {
 
       try {
         nodeRange.surroundContents(span);
+
+        // span内が空の場合は削除
+        if (!span.textContent?.trim()) {
+          span.remove();
+        }
       } catch (error) {
         console.error(error);
       }
