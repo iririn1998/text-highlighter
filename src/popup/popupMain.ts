@@ -2,42 +2,36 @@
  * ポップアップスクリプトのメインエントリーポイント
  */
 
-import { CONSTANTS } from '../shared/constants.js';
-import { getCurrentColor, loadCurrentColor, loadCustomColors } from './colorManager.js';
+import { CONSTANTS } from '../shared/constants';
+import { getCurrentColor, loadCurrentColor, loadCustomColors } from './colorManager';
 import {
     initializeDOMElements,
     setupEventListeners,
     showStatus,
     updateCustomColorDisplay,
     updateSelectedColorButton
-} from './uiController.js';
+} from './uiController';
 
 // Text Highlighter Popup Script
 console.log('ポップアップスクリプトが読み込まれました');
 
 // グローバル変数
-let currentTab = null;
-let selectedText = '';
+let currentTab: chrome.tabs.Tab | null = null;
 
 /**
  * 現在選択されているテキストの情報をコンテンツスクリプトから取得して更新する
  * @returns {Promise<void>}
  */
-const updateSelectionInfo = async () => {
+const updateSelectionInfo = async (): Promise<void> => {
     try {
+        if (!currentTab?.id) return;
+        
         // コンテンツスクリプトから選択情報を取得
-        const response = await chrome.tabs.sendMessage(currentTab.id, {
+        await chrome.tabs.sendMessage(currentTab.id, {
             action: CONSTANTS.MESSAGE_ACTIONS.GET_SELECTED_TEXT
         });
-        
-        if (response && response.hasSelection) {
-            selectedText = response.text;
-        } else {
-            selectedText = '';
-        }
     } catch (error) {
         console.error('選択情報取得エラー:', error);
-        selectedText = '';
     }
 };
 
@@ -46,7 +40,7 @@ const updateSelectionInfo = async () => {
  * 現在のタブの取得、カスタム色の読み込み、イベントリスナーの設定などを行う
  * @returns {Promise<void>}
  */
-const initializePopup = async () => {
+const initializePopup = async (): Promise<void> => {
     try {
         // DOM要素を初期化
         initializeDOMElements();
@@ -82,18 +76,19 @@ const initializePopup = async () => {
 };
 
 // タブの更新を監視
-chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+chrome.tabs.onUpdated.addListener((tabId, changeInfo) => {
     if (tabId === currentTab?.id && changeInfo.status === 'complete') {
         updateSelectionInfo();
     }
 });
 
-// ページのメッセージを監視
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+// ページのメッセージを監視（将来の機能用）
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+chrome.runtime.onMessage.addListener((request) => {
     if (request.action === CONSTANTS.MESSAGE_ACTIONS.TEXT_SELECTED) {
-        selectedText = request.text;
+        // 将来的に選択テキストを表示する場合はここで処理
     } else if (request.action === CONSTANTS.MESSAGE_ACTIONS.TEXT_DESELECTED) {
-        selectedText = '';
+        // 将来的に選択解除を表示する場合はここで処理
     }
 });
 
@@ -102,3 +97,4 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log('ポップアップDOM読み込み完了');
     initializePopup();
 });
+

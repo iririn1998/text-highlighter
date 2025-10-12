@@ -2,8 +2,15 @@
  * ストレージ処理ヘルパーモジュール
  */
 
-import { getStorageKey } from '../shared/utils.js';
-import { checkExtensionContext, sendMessageSafely } from './extensionContext.js';
+import { getStorageKey } from '../shared/utils';
+import { checkExtensionContext, sendMessageSafely } from './extensionContext';
+
+interface HighlightDataStorage {
+    domain: string;
+    url: string;
+    highlights: any[];
+    lastUpdated: number;
+}
 
 /**
  * 確実にデータを保存するためのマルチ保存関数
@@ -12,8 +19,8 @@ import { checkExtensionContext, sendMessageSafely } from './extensionContext.js'
  * @param {string} key - ストレージキー
  * @returns {Promise<Array<string>>} 各保存方法の結果の配列
  */
-export const saveHighlightDataReliable = async (data, key) => {
-    const saveResults = [];
+export const saveHighlightDataReliable = async (data: any, key: string): Promise<string[]> => {
+    const saveResults: string[] = [];
     
     // 方法1: localStorage（最優先 - コンテキスト無効化の影響を受けない）
     try {
@@ -21,7 +28,7 @@ export const saveHighlightDataReliable = async (data, key) => {
         saveResults.push('localStorage: 成功');
         console.log('✅ localStorage保存成功（最優先）');
     } catch (error) {
-        saveResults.push(`localStorage: 失敗 - ${error.message}`);
+        saveResults.push(`localStorage: 失敗 - ${(error as Error).message}`);
         console.error('❌ localStorage保存失敗:', error);
     }
     
@@ -43,16 +50,17 @@ export const saveHighlightDataReliable = async (data, key) => {
             console.log('⚠️ chrome.storage.local: 拡張機能コンテキストが無効です -', reason);
         }
     } catch (error) {
-        saveResults.push(`chrome.storage.local: 失敗 - ${error.message}`);
+        const errorMessage = (error as Error).message;
+        saveResults.push(`chrome.storage.local: 失敗 - ${errorMessage}`);
         console.error('❌ chrome.storage.local保存失敗:', error);
         
         // Extension context invalidated の場合は特別な処理
-        if (error.message.includes('Extension context invalidated')) {
+        if (errorMessage.includes('Extension context invalidated')) {
             console.log('🔄 拡張機能コンテキストが無効化されました。ページリロードを推奨します。');
             
             // ユーザーに通知（1回だけ）
-            if (!window.extensionContextInvalidatedNotified) {
-                window.extensionContextInvalidatedNotified = true;
+            if (!(window as any).extensionContextInvalidatedNotified) {
+                (window as any).extensionContextInvalidatedNotified = true;
                 setTimeout(() => {
                     if (confirm('ハイライト拡張機能のコンテキストが無効化されました。\nページをリロードしてハイライト機能を復旧しますか？')) {
                         window.location.reload();
@@ -77,7 +85,7 @@ export const saveHighlightDataReliable = async (data, key) => {
             saveResults.push('Service Worker: 応答なしまたは失敗');
         }
     } catch (error) {
-        saveResults.push(`Service Worker: 例外 - ${error.message}`);
+        saveResults.push(`Service Worker: 例外 - ${(error as Error).message}`);
     }
     
     console.log('🔄 保存結果:', saveResults);
@@ -90,9 +98,9 @@ export const saveHighlightDataReliable = async (data, key) => {
  * @param {string} key - ストレージキー
  * @returns {Promise<Object|null>} 読み込まれたデータ、見つからない場合はnull
  */
-export const loadHighlightDataReliable = async (key) => {
-    let loadedData = null;
-    const loadResults = [];
+export const loadHighlightDataReliable = async (key: string): Promise<any | null> => {
+    let loadedData: any = null;
+    const loadResults: string[] = [];
     
     // 方法1: localStorage（最優先 - コンテキスト無効化の影響を受けない）
     try {
@@ -105,7 +113,7 @@ export const loadHighlightDataReliable = async (key) => {
             loadResults.push('localStorage: データなし');
         }
     } catch (error) {
-        loadResults.push(`localStorage: 失敗 - ${error.message}`);
+        loadResults.push(`localStorage: 失敗 - ${(error as Error).message}`);
         console.error('❌ localStorage読み込み失敗:', error);
     }
     
@@ -132,11 +140,12 @@ export const loadHighlightDataReliable = async (key) => {
             console.log('⚠️ chrome.storage.local: 拡張機能コンテキストが無効です -', reason);
         }
     } catch (error) {
-        loadResults.push(`chrome.storage.local: 失敗 - ${error.message}`);
+        const errorMessage = (error as Error).message;
+        loadResults.push(`chrome.storage.local: 失敗 - ${errorMessage}`);
         console.error('❌ chrome.storage.local読み込み失敗:', error);
         
         // Extension context invalidated の場合は特別な処理
-        if (error.message.includes('Extension context invalidated')) {
+        if (errorMessage.includes('Extension context invalidated')) {
             console.log('🔄 拡張機能コンテキストが無効化されました。ページリロードを推奨します。');
         }
     }
@@ -157,7 +166,7 @@ export const loadHighlightDataReliable = async (key) => {
                 loadResults.push('Service Worker: データなしまたは失敗');
             }
         } catch (error) {
-            loadResults.push(`Service Worker: 例外 - ${error.message}`);
+            loadResults.push(`Service Worker: 例外 - ${(error as Error).message}`);
         }
     }
     
@@ -171,7 +180,7 @@ export const loadHighlightDataReliable = async (key) => {
  * @param {string} currentDomain - 現在のドメイン
  * @returns {Promise<void>}
  */
-export const saveHighlightData = async (highlightData, currentDomain) => {
+export const saveHighlightData = async (highlightData: any[], currentDomain: string): Promise<void> => {
     try {
         const key = getStorageKey(currentDomain);
         
@@ -181,7 +190,7 @@ export const saveHighlightData = async (highlightData, currentDomain) => {
             return;
         }
         
-        const data = {
+        const data: HighlightDataStorage = {
             domain: currentDomain,
             url: window.location.href,
             highlights: highlightData,
@@ -204,8 +213,8 @@ export const saveHighlightData = async (highlightData, currentDomain) => {
         
     } catch (error) {
         console.error('ハイライトデータ保存エラー (例外):', {
-            error: error.message,
-            stack: error.stack,
+            error: (error as Error).message,
+            stack: (error as Error).stack,
             currentDomain: currentDomain,
             highlightDataLength: highlightData?.length
         });
@@ -213,7 +222,7 @@ export const saveHighlightData = async (highlightData, currentDomain) => {
         // 例外時の緊急保存
         try {
             const key = getStorageKey(currentDomain);
-            const data = {
+            const data: HighlightDataStorage = {
                 domain: currentDomain,
                 url: window.location.href,
                 highlights: highlightData,
@@ -232,7 +241,7 @@ export const saveHighlightData = async (highlightData, currentDomain) => {
  * @param {string} currentDomain - 現在のドメイン
  * @returns {Promise<Array>} 読み込まれたハイライトデータ
  */
-export const loadHighlightData = async (currentDomain) => {
+export const loadHighlightData = async (currentDomain: string): Promise<any[]> => {
     try {
         const key = getStorageKey(currentDomain);
         console.log('📖 ハイライトデータを読み込み中...', key);
@@ -251,8 +260,8 @@ export const loadHighlightData = async (currentDomain) => {
         
     } catch (error) {
         console.error('ハイライトデータ読み込みエラー (例外):', {
-            error: error.message,
-            stack: error.stack
+            error: (error as Error).message,
+            stack: (error as Error).stack
         });
         
         // 例外時の緊急読み込み
@@ -274,44 +283,3 @@ export const loadHighlightData = async (currentDomain) => {
     }
 };
 
-/**
- * デバッグ用の包括的ストレージテスト関数
- * 新しい保存・読み込み機能をテストし、結果をコンソールに出力する
- * @returns {Promise<{saveResults: Array<string>, loadResults: any}>} テスト結果
- */
-window.testStorage = async () => {
-    console.log('🚀 === 包括的ストレージテスト開始 ===');
-    
-    const testKey = 'test_connection_' + Date.now();
-    const testData = { test: true, timestamp: Date.now(), version: '2.0' };
-    
-    // 新しい確実な保存機能をテスト
-    console.log('📝 新しい保存機能をテスト中...');
-    const saveResults = await saveHighlightDataReliable(testData, testKey);
-    
-    // 少し待ってから読み込みテスト
-    await new Promise(resolve => setTimeout(resolve, 100));
-    
-    console.log('📖 新しい読み込み機能をテスト中...');
-    const loadResults = await loadHighlightDataReliable(testKey);
-    
-    if (loadResults) {
-        console.log('✅ テストデータ読み込み成功:', loadResults);
-    } else {
-        console.log('❌ テストデータ読み込み失敗');
-    }
-    
-    // クリーンアップ
-    try {
-        if (chrome?.storage?.local) {
-            await chrome.storage.local.remove([testKey]);
-        }
-        localStorage.removeItem(testKey);
-        console.log('🧹 テストデータをクリーンアップしました');
-    } catch (error) {
-        console.log('🧹 クリーンアップエラー:', error);
-    }
-    
-    console.log('🎯 === ストレージテスト完了 ===');
-    return { saveResults, loadResults };
-};

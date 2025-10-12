@@ -2,8 +2,19 @@
  * メッセージ処理モジュール
  */
 
-import { CONSTANTS } from '../shared/constants.js';
-import { getServiceWorkerStatus } from './serviceWorkerManager.js';
+import { CONSTANTS } from '../shared/constants';
+import { getServiceWorkerStatus } from './serviceWorkerManager';
+
+interface SaveToStorageRequest {
+    action: string;
+    key: string;
+    data: any;
+}
+
+interface LoadFromStorageRequest {
+    action: string;
+    key: string;
+}
 
 /**
  * ストレージへのデータ保存を処理する
@@ -11,7 +22,7 @@ import { getServiceWorkerStatus } from './serviceWorkerManager.js';
  * @param {Function} sendResponse - レスポンスを送信する関数
  * @returns {Promise<void>}
  */
-const handleSaveToStorage = async (request, sendResponse) => {
+const handleSaveToStorage = async (request: SaveToStorageRequest, sendResponse: (response: any) => void): Promise<void> => {
     const startTime = Date.now();
     
     try {
@@ -44,13 +55,13 @@ const handleSaveToStorage = async (request, sendResponse) => {
         const duration = Date.now() - startTime;
         console.error('ストレージ保存エラー:', {
             key: request.key,
-            error: error.message,
+            error: (error as Error).message,
             duration: duration + 'ms'
         });
         
         sendResponse({ 
             success: false, 
-            error: error.message,
+            error: (error as Error).message,
             timestamp: Date.now(),
             duration: duration
         });
@@ -63,7 +74,7 @@ const handleSaveToStorage = async (request, sendResponse) => {
  * @param {Function} sendResponse - レスポンスを送信する関数
  * @returns {Promise<void>}
  */
-const handleLoadFromStorage = async (request, sendResponse) => {
+const handleLoadFromStorage = async (request: LoadFromStorageRequest, sendResponse: (response: any) => void): Promise<void> => {
     const startTime = Date.now();
     
     try {
@@ -96,13 +107,13 @@ const handleLoadFromStorage = async (request, sendResponse) => {
         const duration = Date.now() - startTime;
         console.error('ストレージ読み込みエラー:', {
             key: request.key,
-            error: error.message,
+            error: (error as Error).message,
             duration: duration + 'ms'
         });
         
         sendResponse({ 
             success: false, 
-            error: error.message,
+            error: (error as Error).message,
             timestamp: Date.now(),
             duration: duration
         });
@@ -112,8 +123,8 @@ const handleLoadFromStorage = async (request, sendResponse) => {
 /**
  * メッセージハンドラーを設定する
  */
-export const setupMessageHandler = () => {
-    chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+export const setupMessageHandler = (): void => {
+    chrome.runtime.onMessage.addListener((request: any, sender, sendResponse) => {
         console.log('Background: メッセージを受信しました:', {
             action: request.action,
             sender: sender.tab?.url || 'popup',
@@ -173,7 +184,7 @@ export const setupMessageHandler = () => {
             if (!isAsync) {
                 sendResponse({ 
                     success: false, 
-                    error: error.message,
+                    error: (error as Error).message,
                     action: request.action
                 });
             }
@@ -181,3 +192,4 @@ export const setupMessageHandler = () => {
         }
     });
 };
+

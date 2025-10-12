@@ -2,9 +2,9 @@
  * コンテンツスクリプトのメインエントリーポイント
  */
 
-import { CONSTANTS } from '../shared/constants.js';
-import { getCurrentDomain } from '../shared/utils.js';
-import { checkExtensionContext } from './extensionContext.js';
+import { CONSTANTS } from '../shared/constants';
+import { getCurrentDomain } from '../shared/utils';
+import { checkExtensionContext } from './extensionContext';
 import {
     applyHighlight,
     getHighlightData,
@@ -13,12 +13,12 @@ import {
     setCurrentDomain,
     setHighlightData,
     setupHighlightEventListeners
-} from './highlightManager.js';
-import { loadHighlightData, saveHighlightData } from './storageHelper.js';
-import { getSelectedText, setupTextSelectionListeners } from './textSelection.js';
+} from './highlightManager';
+import { loadHighlightData, saveHighlightData } from './storageHelper';
+import { getSelectedText, setupTextSelectionListeners } from './textSelection';
 
 // 初期化処理
-const initialize = async () => {
+const initialize = async (): Promise<void> => {
     console.log('Text Highlighter: コンテンツスクリプト初期化開始');
     
     // 拡張機能のコンテキストをチェック
@@ -57,7 +57,7 @@ const initialize = async () => {
 };
 
 // ポップアップからのメッセージを受信
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
     try {
         if (request.action === CONSTANTS.MESSAGE_ACTIONS.APPLY_HIGHLIGHT) {
             const selectedText = getSelectedText();
@@ -81,7 +81,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         }
     } catch (error) {
         console.error('メッセージ処理エラー:', error);
-        sendResponse({success: false, error: error.message});
+        sendResponse({success: false, error: (error as Error).message});
     }
     
     return true; // 非同期レスポンスを示す
@@ -101,3 +101,4 @@ window.addEventListener('beforeunload', () => {
     const currentDomain = getCurrentDomain();
     saveHighlightData(highlightData, currentDomain);
 });
+

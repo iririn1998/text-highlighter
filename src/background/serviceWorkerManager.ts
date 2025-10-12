@@ -3,14 +3,14 @@
  */
 
 // 強化されたService Workerの keep alive機能
-let keepAliveInterval;
+let keepAliveInterval: ReturnType<typeof setInterval> | null = null;
 let isServiceWorkerActive = true;
 
 /**
  * Service Workerの状態を取得する
  * @returns {boolean} Service Workerがアクティブな場合はtrue
  */
-export const getServiceWorkerStatus = () => {
+export const getServiceWorkerStatus = (): boolean => {
     return isServiceWorkerActive;
 };
 
@@ -18,7 +18,7 @@ export const getServiceWorkerStatus = () => {
  * Service Workerの keep alive 機能を開始する
  * 定期的にチェックしてService Workerの状態を維持する
  */
-export const startKeepAlive = () => {
+export const startKeepAlive = (): void => {
     console.log('Keep alive機能を開始します');
     
     // より頻繁に(10秒ごと)チェックして、接続を維持
@@ -33,7 +33,7 @@ export const startKeepAlive = () => {
             }
         } catch (error) {
             if (isServiceWorkerActive) {
-                console.log('Service Worker keep alive 失敗:', error.message);
+                console.log('Service Worker keep alive 失敗:', (error as Error).message);
                 isServiceWorkerActive = false;
             }
             
@@ -41,7 +41,7 @@ export const startKeepAlive = () => {
             try {
                 await chrome.storage.local.get(['_keepalive']);
             } catch (retryError) {
-                console.log('Service Worker再起動試行失敗:', retryError.message);
+                console.log('Service Worker再起動試行失敗:', (retryError as Error).message);
             }
         }
     }, 10000); // 10秒ごと
@@ -50,7 +50,7 @@ export const startKeepAlive = () => {
 /**
  * keep alive 機能を停止する
  */
-export const stopKeepAlive = () => {
+export const stopKeepAlive = (): void => {
     if (keepAliveInterval) {
         clearInterval(keepAliveInterval);
         keepAliveInterval = null;
@@ -61,7 +61,7 @@ export const stopKeepAlive = () => {
 /**
  * Service Workerの状態を監視し、ライフサイクルイベントに対応する
  */
-export const monitorServiceWorkerHealth = () => {
+export const monitorServiceWorkerHealth = (): void => {
     // アイドル状態の検出と対応
     if (chrome.idle && chrome.idle.onStateChanged) {
         chrome.idle.onStateChanged.addListener((newState) => {
@@ -90,3 +90,4 @@ export const monitorServiceWorkerHealth = () => {
         });
     }
 };
+

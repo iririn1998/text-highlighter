@@ -2,12 +2,12 @@
  * コンテキストメニュー処理モジュール
  */
 
-import { CONSTANTS } from '../shared/constants.js';
+import { CONSTANTS } from '../shared/constants';
 
 /**
  * 拡張機能の右クリックコンテキストメニューを作成する
  */
-export const createContextMenus = () => {
+export const createContextMenus = (): void => {
     // 既存のメニューをクリア
     chrome.contextMenus.removeAll(() => {
         // ハイライト追加メニューを作成
@@ -26,7 +26,7 @@ export const createContextMenus = () => {
  * 現在設定されているハイライト色をストレージから取得する
  * @returns {Promise<string>} ハイライト色（16進数カラーコード）
  */
-const getCurrentHighlightColorFromStorage = async () => {
+const getCurrentHighlightColorFromStorage = async (): Promise<string> => {
     try {
         const result = await chrome.storage.sync.get([CONSTANTS.STORAGE_KEYS.CURRENT_HIGHLIGHT_COLOR]);
         const color = result[CONSTANTS.STORAGE_KEYS.CURRENT_HIGHLIGHT_COLOR] || CONSTANTS.DEFAULT_HIGHLIGHT_COLOR;
@@ -40,14 +40,14 @@ const getCurrentHighlightColorFromStorage = async () => {
 /**
  * 右クリックメニューのクリック処理を設定する
  */
-export const setupContextMenuClickHandler = () => {
+export const setupContextMenuClickHandler = (): void => {
     chrome.contextMenus.onClicked.addListener((info, tab) => {
         console.log('右クリックメニューがクリックされました:', info.menuItemId);
         
-        if (info.menuItemId === "addHighlight") {
+        if (info.menuItemId === "addHighlight" && tab?.id) {
             // 現在選択中の色を取得してコンテンツスクリプトにハイライト追加を指示
             getCurrentHighlightColorFromStorage().then(color => {
-                chrome.tabs.sendMessage(tab.id, {
+                chrome.tabs.sendMessage(tab.id!, {
                     action: CONSTANTS.MESSAGE_ACTIONS.ADD_HIGHLIGHT_FROM_CONTEXT,
                     selectedText: info.selectionText,
                     color: color
@@ -56,3 +56,4 @@ export const setupContextMenuClickHandler = () => {
         }
     });
 };
+

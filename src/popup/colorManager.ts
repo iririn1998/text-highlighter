@@ -2,10 +2,16 @@
  * 色管理モジュール
  */
 
-import { CONSTANTS } from '../shared/constants.js';
+import { CONSTANTS } from '../shared/constants';
+
+interface ColorInfo {
+    color: string;
+    name: string;
+    id?: string;
+}
 
 // カスタム色データ
-let customColors = [];
+let customColors: ColorInfo[] = [];
 let currentHighlightColor = CONSTANTS.DEFAULT_HIGHLIGHT_COLOR;
 let currentColorName = '黄色';
 
@@ -13,7 +19,7 @@ let currentColorName = '黄色';
  * 現在の色を取得する
  * @returns {Object} 現在の色情報
  */
-export const getCurrentColor = () => {
+export const getCurrentColor = (): ColorInfo => {
     return {
         color: currentHighlightColor,
         name: currentColorName
@@ -24,7 +30,7 @@ export const getCurrentColor = () => {
  * カスタム色を取得する
  * @returns {Array} カスタム色配列
  */
-export const getCustomColors = () => {
+export const getCustomColors = (): ColorInfo[] => {
     return customColors;
 };
 
@@ -33,7 +39,7 @@ export const getCustomColors = () => {
  * @param {string} color - 選択する色（16進数カラーコード）
  * @param {string} colorName - 色の名前
  */
-export const selectColor = (color, colorName) => {
+export const selectColor = (color: string, colorName: string): void => {
     currentHighlightColor = color;
     currentColorName = colorName;
     saveCurrentColor();
@@ -43,7 +49,7 @@ export const selectColor = (color, colorName) => {
  * 現在選択されているハイライト色をストレージに保存する
  * @returns {Promise<void>}
  */
-const saveCurrentColor = async () => {
+const saveCurrentColor = async (): Promise<void> => {
     try {
         await chrome.storage.sync.set({ 
             [CONSTANTS.STORAGE_KEYS.CURRENT_HIGHLIGHT_COLOR]: currentHighlightColor,
@@ -58,7 +64,7 @@ const saveCurrentColor = async () => {
  * ストレージから現在のハイライト色を読み込む
  * @returns {Promise<void>}
  */
-export const loadCurrentColor = async () => {
+export const loadCurrentColor = async (): Promise<void> => {
     try {
         const result = await chrome.storage.sync.get([
             CONSTANTS.STORAGE_KEYS.CURRENT_HIGHLIGHT_COLOR, 
@@ -77,7 +83,7 @@ export const loadCurrentColor = async () => {
  * ストレージからカスタム色の一覧を読み込む
  * @returns {Promise<void>}
  */
-export const loadCustomColors = async () => {
+export const loadCustomColors = async (): Promise<void> => {
     try {
         const result = await chrome.storage.sync.get([CONSTANTS.STORAGE_KEYS.CUSTOM_COLORS]);
         customColors = result[CONSTANTS.STORAGE_KEYS.CUSTOM_COLORS] || [];
@@ -94,9 +100,9 @@ export const loadCustomColors = async () => {
  * @param {string} name - 色の名前
  * @returns {Promise<void>}
  */
-export const addCustomColor = async (color, name) => {
+export const addCustomColor = async (color: string, name: string): Promise<void> => {
     try {
-        const newColor = {
+        const newColor: ColorInfo = {
             color: color,
             name: name,
             id: 'custom_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5)
@@ -118,7 +124,7 @@ export const addCustomColor = async (color, name) => {
  * @param {string} name - 新しい色の名前
  * @returns {Promise<void>}
  */
-export const updateCustomColor = async (index, color, name) => {
+export const updateCustomColor = async (index: number, color: string, name: string): Promise<void> => {
     try {
         if (index >= 0 && index < customColors.length) {
             customColors[index].color = color;
@@ -137,7 +143,7 @@ export const updateCustomColor = async (index, color, name) => {
  * @param {number} index - 削除する色のインデックス
  * @returns {Promise<void>}
  */
-export const removeCustomColor = async (index) => {
+export const removeCustomColor = async (index: number): Promise<ColorInfo | undefined> => {
     try {
         if (index >= 0 && index < customColors.length) {
             const removedColor = customColors[index];
@@ -157,7 +163,7 @@ export const removeCustomColor = async (index) => {
  * @returns {Promise<void>}
  * @throws {Error} 保存に失敗した場合
  */
-const saveCustomColors = async () => {
+const saveCustomColors = async (): Promise<void> => {
     try {
         await chrome.storage.sync.set({ [CONSTANTS.STORAGE_KEYS.CUSTOM_COLORS]: customColors });
         console.log('カスタム色を保存しました:', customColors);
@@ -166,3 +172,4 @@ const saveCustomColors = async () => {
         throw error;
     }
 };
+

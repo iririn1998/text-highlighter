@@ -2,15 +2,15 @@
  * バックグラウンドスクリプトのメインエントリーポイント
  */
 
-import { createContextMenus, setupContextMenuClickHandler } from './contextMenuHandler.js';
-import { setupMessageHandler } from './messageHandler.js';
-import { monitorServiceWorkerHealth, startKeepAlive } from './serviceWorkerManager.js';
+import { createContextMenus, setupContextMenuClickHandler } from './contextMenuHandler';
+import { setupMessageHandler } from './messageHandler';
+import { monitorServiceWorkerHealth, startKeepAlive } from './serviceWorkerManager';
 
 // Text Highlighter Background Script
 console.log('Text Highlighter バックグラウンドスクリプトが読み込まれました');
 
 // 初期化処理
-const initialize = () => {
+const initialize = (): void => {
     // Service Worker起動時に keep alive を開始
     startKeepAlive();
     monitorServiceWorkerHealth();
@@ -25,7 +25,7 @@ const initialize = () => {
 };
 
 // 拡張機能インストール時の処理
-chrome.runtime.onInstalled.addListener((details) => {
+chrome.runtime.onInstalled.addListener(() => {
     console.log('Text Highlighter がインストールされました');
     
     // 右クリックメニューを作成
@@ -34,3 +34,4 @@ chrome.runtime.onInstalled.addListener((details) => {
 
 // 初期化実行
 initialize();
+

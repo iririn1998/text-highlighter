@@ -6,7 +6,7 @@
  * ハイライト用のユニークなIDを生成する
  * @returns {string} 生成されたハイライトID
  */
-export const generateHighlightId = () => {
+export const generateHighlightId = (): string => {
     return 'highlight_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
 };
 
@@ -15,7 +15,7 @@ export const generateHighlightId = () => {
  * @param {Element} element - XPathを取得する要素
  * @returns {string|null} XPath文字列、取得できない場合はnull
  */
-export const getXPath = (element) => {
+export const getXPath = (element: Element): string | null => {
     if (!element || element.nodeType !== Node.ELEMENT_NODE) {
         return null;
     }
@@ -24,22 +24,23 @@ export const getXPath = (element) => {
         return `//*[@id="${element.id}"]`;
     }
     
-    const parts = [];
-    while (element && element.nodeType === Node.ELEMENT_NODE) {
+    const parts: string[] = [];
+    let currentElement: Element | null = element;
+    while (currentElement && currentElement.nodeType === Node.ELEMENT_NODE) {
         let index = 1;
-        let sibling = element.previousSibling;
+        let sibling = currentElement.previousSibling;
         
         while (sibling) {
             if (sibling.nodeType === Node.ELEMENT_NODE && 
-                sibling.tagName === element.tagName) {
+                (sibling as Element).tagName === currentElement.tagName) {
                 index++;
             }
             sibling = sibling.previousSibling;
         }
         
-        const tagName = element.tagName.toLowerCase();
+        const tagName = currentElement.tagName.toLowerCase();
         parts.unshift(`${tagName}[${index}]`);
-        element = element.parentElement;
+        currentElement = currentElement.parentElement;
     }
     
     return `/${parts.join('/')}`;
@@ -50,7 +51,7 @@ export const getXPath = (element) => {
  * @param {string} xpath - XPath文字列
  * @returns {Element|null} 見つかった要素、見つからない場合はnull
  */
-export const getElementByXPath = (xpath) => {
+export const getElementByXPath = (xpath: string): Element | null => {
     try {
         const result = document.evaluate(
             xpath,
@@ -59,7 +60,7 @@ export const getElementByXPath = (xpath) => {
             XPathResult.FIRST_ORDERED_NODE_TYPE,
             null
         );
-        return result.singleNodeValue;
+        return result.singleNodeValue as Element | null;
     } catch (error) {
         console.error('XPath評価エラー:', error);
         return null;
@@ -71,19 +72,18 @@ export const getElementByXPath = (xpath) => {
  * @param {Element} element - 検索対象の要素
  * @returns {Array<Text>} テキストノードの配列
  */
-export const getTextNodes = (element) => {
-    const textNodes = [];
+export const getTextNodes = (element: Element): Text[] => {
+    const textNodes: Text[] = [];
     const walker = document.createTreeWalker(
         element,
         NodeFilter.SHOW_TEXT,
-        null,
-        false
+        null
     );
     
-    let node;
+    let node: Node | null;
     while (node = walker.nextNode()) {
-        if (node.textContent.trim()) {
-            textNodes.push(node);
+        if (node.textContent && node.textContent.trim()) {
+            textNodes.push(node as Text);
         }
     }
     
@@ -94,7 +94,7 @@ export const getTextNodes = (element) => {
  * 現在のドメインを取得する
  * @returns {string} 現在のページのホスト名
  */
-export const getCurrentDomain = () => {
+export const getCurrentDomain = (): string => {
     return window.location.hostname;
 };
 
@@ -102,7 +102,7 @@ export const getCurrentDomain = () => {
  * 現在のドメイン用のストレージキーを取得する
  * @returns {string} ストレージキー
  */
-export const getStorageKey = (domain) => {
+export const getStorageKey = (domain: string): string => {
     return `highlights_${domain}`;
 };
 
@@ -112,7 +112,7 @@ export const getStorageKey = (domain) => {
  * @param {Range} range2 - 二番目の範囲
  * @returns {boolean} 範囲が重複している場合はtrue
  */
-export const rangesOverlap = (range1, range2) => {
+export const rangesOverlap = (range1: Range, range2: Range): boolean => {
     try {
         return range1.compareBoundaryPoints(Range.START_TO_END, range2) > 0 &&
                range2.compareBoundaryPoints(Range.START_TO_END, range1) > 0;
@@ -126,8 +126,9 @@ export const rangesOverlap = (range1, range2) => {
  * @param {Element} element - 範囲を取得する要素
  * @returns {Range} 要素の内容を選択する範囲
  */
-export const getRangeFromElement = (element) => {
+export const getRangeFromElement = (element: Element): Range => {
     const range = document.createRange();
     range.selectNodeContents(element);
     return range;
 };
+

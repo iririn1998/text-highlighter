@@ -2,24 +2,24 @@
  * UI制御モジュール
  */
 
-import { CONSTANTS } from '../shared/constants.js';
+import { CONSTANTS } from '../shared/constants';
 import {
     addCustomColor,
     getCustomColors,
     removeCustomColor,
     selectColor,
     updateCustomColor
-} from './colorManager.js';
+} from './colorManager';
 
 // DOM要素
-let customColorList;
-let addCustomBtn;
-let statusMessage;
+let customColorList: HTMLElement | null = null;
+let addCustomBtn: HTMLElement | null = null;
+let statusMessage: HTMLElement | null = null;
 
 /**
  * DOM要素を初期化する
  */
-export const initializeDOMElements = () => {
+export const initializeDOMElements = (): void => {
     customColorList = document.getElementById('customColorList');
     addCustomBtn = document.getElementById('addCustomBtn');
     statusMessage = document.getElementById('statusMessage');
@@ -28,20 +28,22 @@ export const initializeDOMElements = () => {
 /**
  * ポップアップ内の各要素にイベントリスナーを設定する
  */
-export const setupEventListeners = () => {
+export const setupEventListeners = (): void => {
     // デフォルト色ボタンのイベントリスナー
     const colorButtons = document.querySelectorAll('.color-button[data-color]');
     colorButtons.forEach(button => {
         button.addEventListener('click', () => {
             const color = button.getAttribute('data-color');
             const colorName = button.textContent;
-            selectColor(color, colorName);
-            updateSelectedColorButton(color);
+            if (color && colorName) {
+                selectColor(color, colorName);
+                updateSelectedColorButton(color);
+            }
         });
     });
     
     // カスタム色追加ボタン
-    addCustomBtn.addEventListener('click', () => {
+    addCustomBtn?.addEventListener('click', () => {
         const customColors = getCustomColors();
         if (customColors.length >= CONSTANTS.LIMITS.MAX_CUSTOM_COLORS) {
             showStatus(`カスタム色は最大${CONSTANTS.LIMITS.MAX_CUSTOM_COLORS}色まで設定できます`, 'error');
@@ -55,7 +57,7 @@ export const setupEventListeners = () => {
  * 選択された色ボタンの表示スタイルを更新する
  * @param {string} selectedColor - 選択された色のカラーコード
  */
-export const updateSelectedColorButton = (selectedColor) => {
+export const updateSelectedColorButton = (selectedColor: string): void => {
     // 全ての色ボタンからselectedクラスを削除
     document.querySelectorAll('.color-button').forEach(button => {
         button.classList.remove('selected');
@@ -72,7 +74,9 @@ export const updateSelectedColorButton = (selectedColor) => {
  * カスタム色の表示を更新する
  * カスタム色ボタンと削除ボタンを作成し、イベントリスナーを設定する
  */
-export const updateCustomColorDisplay = () => {
+export const updateCustomColorDisplay = (): void => {
+    if (!customColorList) return;
+    
     const customColors = getCustomColors();
     customColorList.innerHTML = '';
     
@@ -142,7 +146,9 @@ export const updateCustomColorDisplay = () => {
             
             colorContainer.appendChild(button);
             colorContainer.appendChild(deleteBtn);
-            customColorList.appendChild(colorContainer);
+            if (customColorList) {
+                customColorList.appendChild(colorContainer);
+            }
         });
     }
 };
@@ -152,14 +158,18 @@ export const updateCustomColorDisplay = () => {
  * @param {string} message - 表示するメッセージ
  * @param {string} type - メッセージのタイプ（'success', 'error', など）
  */
-export const showStatus = (message, type) => {
+export const showStatus = (message: string, type: string): void => {
+    if (!statusMessage) return;
+    
     statusMessage.textContent = message;
     statusMessage.className = `status-message status-${type}`;
     statusMessage.style.display = 'block';
     
     // 3秒後に非表示
     setTimeout(() => {
-        statusMessage.style.display = 'none';
+        if (statusMessage) {
+            statusMessage.style.display = 'none';
+        }
     }, CONSTANTS.TIMEOUTS.STATUS_MESSAGE_DISPLAY);
 };
 
@@ -167,10 +177,10 @@ export const showStatus = (message, type) => {
  * カスタム色の追加・編集ダイアログを表示する
  * @param {number|null} [editIndex=null] - 編集する色のインデックス、nullの場合は新規追加
  */
-export const showCustomColorDialog = (editIndex = null) => {
+export const showCustomColorDialog = (editIndex: number | null = null): void => {
     const customColors = getCustomColors();
     const isEdit = editIndex !== null;
-    const existingColor = isEdit ? customColors[editIndex] : null;
+    const existingColor = isEdit && editIndex !== null ? customColors[editIndex] : null;
     
     // ダイアログHTML
     const dialogHtml = `
@@ -236,27 +246,31 @@ export const showCustomColorDialog = (editIndex = null) => {
     document.body.insertAdjacentHTML('beforeend', dialogHtml);
     
     const dialog = document.getElementById('customColorDialog');
-    const colorInput = document.getElementById('colorInput');
-    const nameInput = document.getElementById('nameInput');
+    const colorInput = document.getElementById('colorInput') as HTMLInputElement;
+    const nameInput = document.getElementById('nameInput') as HTMLInputElement;
     const saveBtn = document.getElementById('saveCustomColor');
     const cancelBtn = document.getElementById('cancelCustomColor');
     
     // フォーカスを名前入力欄に設定
-    nameInput.focus();
+    nameInput?.focus();
+    
+    const closeDialog = () => {
+        dialog?.remove();
+    };
     
     // 保存ボタン
-    saveBtn.addEventListener('click', async () => {
-        const color = colorInput.value;
-        const name = nameInput.value.trim();
+    saveBtn?.addEventListener('click', async () => {
+        const color = colorInput?.value || '';
+        const name = nameInput?.value.trim() || '';
         
         if (!name) {
             alert('色の名前を入力してください');
-            nameInput.focus();
+            nameInput?.focus();
             return;
         }
         
         try {
-            if (isEdit) {
+            if (isEdit && editIndex !== null) {
                 await updateCustomColor(editIndex, color, name);
                 showStatus(`カスタム色「${name}」を更新しました`, 'success');
             } else {
@@ -272,10 +286,10 @@ export const showCustomColorDialog = (editIndex = null) => {
     });
     
     // キャンセルボタン
-    cancelBtn.addEventListener('click', closeDialog);
+    cancelBtn?.addEventListener('click', closeDialog);
     
     // ESCキーでダイアログを閉じる
-    const escHandler = (e) => {
+    const escHandler = (e: KeyboardEvent) => {
         if (e.key === 'Escape') {
             closeDialog();
             document.removeEventListener('keydown', escHandler);
@@ -284,13 +298,10 @@ export const showCustomColorDialog = (editIndex = null) => {
     document.addEventListener('keydown', escHandler);
     
     // Enterキーで保存
-    nameInput.addEventListener('keydown', (e) => {
+    nameInput?.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
-            saveBtn.click();
+            saveBtn?.click();
         }
     });
-    
-    const closeDialog = () => {
-        dialog.remove();
-    };
 };
+

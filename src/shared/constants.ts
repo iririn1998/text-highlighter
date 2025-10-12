@@ -44,3 +44,4 @@ export const CONSTANTS = {
         HIGHLIGHT_ELEMENT_SEARCH_DEPTH: 5
     }
 };
+

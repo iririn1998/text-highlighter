@@ -9,7 +9,7 @@ let extensionValid = true;
  * 拡張機能のコンテキストが有効かどうかをチェックする
  * @returns {boolean} 拡張機能のコンテキストが有効な場合はtrue、無効な場合はfalse
  */
-export const checkExtensionContext = () => {
+export const checkExtensionContext = (): boolean => {
     try {
         // chromeオブジェクトが存在するかチェック
         if (!chrome || !chrome.runtime) {
@@ -46,7 +46,7 @@ export const checkExtensionContext = () => {
         return true;
     } catch (error) {
         extensionValid = false;
-        console.log('拡張機能コンテキストが無効です:', error.message);
+        console.log('拡張機能コンテキストが無効です:', (error as Error).message);
         return false;
     }
 };
@@ -55,7 +55,7 @@ export const checkExtensionContext = () => {
  * 拡張機能の状態を取得する
  * @returns {boolean} 拡張機能が有効な場合はtrue
  */
-export const isExtensionValid = () => {
+export const isExtensionValid = (): boolean => {
     return extensionValid;
 };
 
@@ -63,13 +63,13 @@ export const isExtensionValid = () => {
  * Service Workerの状態を確認する
  * @returns {Promise<boolean>} Service Workerがアクティブな場合はtrue
  */
-export const checkServiceWorkerStatus = async () => {
+export const checkServiceWorkerStatus = async (): Promise<boolean> => {
     try {
         // 簡単なpingメッセージを送信してService Workerの状態を確認
         const response = await chrome.runtime.sendMessage({ action: 'ping' });
         return response && response.success;
     } catch (error) {
-        console.log('Service Worker状態確認失敗:', error.message);
+        console.log('Service Worker状態確認失敗:', (error as Error).message);
         return false;
     }
 };
@@ -81,7 +81,7 @@ export const checkServiceWorkerStatus = async () => {
  * @param {number} [maxRetries=3] - 最大リトライ回数
  * @returns {Promise<Object|null>} Service Workerからの応答、失敗時はnull
  */
-export const sendMessageSafely = async (message, maxRetries = 3) => {
+export const sendMessageSafely = async (message: any, maxRetries: number = 3): Promise<any | null> => {
     // 拡張機能のコンテキストが有効かチェック
     if (!checkExtensionContext()) {
         console.log('拡張機能のコンテキストが無効なため、メッセージ送信をスキップします');
@@ -113,15 +113,16 @@ export const sendMessageSafely = async (message, maxRetries = 3) => {
             return response;
         } catch (error) {
             retryCount++;
+            const errorMessage = (error as Error).message;
             
             // Service Workerが非アクティブまたはコンテキストが無効な場合
-            if (error.message.includes('Extension context invalidated') || 
-                error.message.includes('Could not establish connection') ||
-                error.message.includes('receiving end does not exist') ||
-                error.message.includes('Receiving end does not exist')) {
+            if (errorMessage.includes('Extension context invalidated') || 
+                errorMessage.includes('Could not establish connection') ||
+                errorMessage.includes('receiving end does not exist') ||
+                errorMessage.includes('Receiving end does not exist')) {
                 
                 console.log(`メッセージ送信試行 ${retryCount}/${maxRetries + 1} 失敗:`, {
-                    error: error.message,
+                    error: errorMessage,
                     action: message.action
                 });
                 
@@ -137,9 +138,9 @@ export const sendMessageSafely = async (message, maxRetries = 3) => {
             
             // その他のエラーの場合は即座に失敗
             console.error('予期しないメッセージ送信エラー:', {
-                error: error.message,
+                error: errorMessage,
                 action: message.action,
-                stack: error.stack
+                stack: (error as Error).stack
             });
             return null;
         }
@@ -147,3 +148,4 @@ export const sendMessageSafely = async (message, maxRetries = 3) => {
     
     return null;
 };
+
