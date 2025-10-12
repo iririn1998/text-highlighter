@@ -16,7 +16,6 @@ export type HighlightData = {
 
 /**
  * カラーオプションの型定義
- * DEFAULT_COLORS配列の要素から自動生成
  */
 export type ColorOption = (typeof DEFAULT_COLORS)[number];
 
