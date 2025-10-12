@@ -10,45 +10,45 @@ let extensionValid = true;
  * @returns {boolean} 拡張機能のコンテキストが有効な場合はtrue、無効な場合はfalse
  */
 export const checkExtensionContext = (): boolean => {
-    try {
-        // chromeオブジェクトが存在するかチェック
-        if (!chrome || !chrome.runtime) {
-            extensionValid = false;
-            return false;
-        }
-        
-        // chrome.storage が利用可能かチェック
-        if (!chrome.storage || !chrome.storage.local) {
-            extensionValid = false;
-            return false;
-        }
-        
-        // chrome.runtime.id にアクセスしてコンテキストをテスト
-        const testId = chrome.runtime.id;
-        if (testId === undefined || testId === null) {
-            extensionValid = false;
-            return false;
-        }
-        
-        // ランタイムURLが有効かチェック
-        try {
-            const testUrl = chrome.runtime.getURL('manifest.json');
-            if (!testUrl || !testUrl.startsWith('chrome-extension://')) {
-                extensionValid = false;
-                return false;
-            }
-        } catch (urlError) {
-            extensionValid = false;
-            return false;
-        }
-        
-        extensionValid = true;
-        return true;
-    } catch (error) {
-        extensionValid = false;
-        console.log('拡張機能コンテキストが無効です:', (error as Error).message);
-        return false;
+  try {
+    // chromeオブジェクトが存在するかチェック
+    if (!chrome || !chrome.runtime) {
+      extensionValid = false;
+      return false;
     }
+
+    // chrome.storage が利用可能かチェック
+    if (!chrome.storage || !chrome.storage.local) {
+      extensionValid = false;
+      return false;
+    }
+
+    // chrome.runtime.id にアクセスしてコンテキストをテスト
+    const testId = chrome.runtime.id;
+    if (testId === undefined || testId === null) {
+      extensionValid = false;
+      return false;
+    }
+
+    // ランタイムURLが有効かチェック
+    try {
+      const testUrl = chrome.runtime.getURL('manifest.json');
+      if (!testUrl || !testUrl.startsWith('chrome-extension://')) {
+        extensionValid = false;
+        return false;
+      }
+    } catch (_urlError) {
+      extensionValid = false;
+      return false;
+    }
+
+    extensionValid = true;
+    return true;
+  } catch (error) {
+    extensionValid = false;
+    console.log('拡張機能コンテキストが無効です:', (error as Error).message);
+    return false;
+  }
 };
 
 /**
@@ -56,7 +56,7 @@ export const checkExtensionContext = (): boolean => {
  * @returns {boolean} 拡張機能が有効な場合はtrue
  */
 export const isExtensionValid = (): boolean => {
-    return extensionValid;
+  return extensionValid;
 };
 
 /**
@@ -64,14 +64,14 @@ export const isExtensionValid = (): boolean => {
  * @returns {Promise<boolean>} Service Workerがアクティブな場合はtrue
  */
 export const checkServiceWorkerStatus = async (): Promise<boolean> => {
-    try {
-        // 簡単なpingメッセージを送信してService Workerの状態を確認
-        const response = await chrome.runtime.sendMessage({ action: 'ping' });
-        return response && response.success;
-    } catch (error) {
-        console.log('Service Worker状態確認失敗:', (error as Error).message);
-        return false;
-    }
+  try {
+    // 簡単なpingメッセージを送信してService Workerの状態を確認
+    const response = await chrome.runtime.sendMessage({ action: 'ping' });
+    return response?.success;
+  } catch (error) {
+    console.log('Service Worker状態確認失敗:', (error as Error).message);
+    return false;
+  }
 };
 
 /**
@@ -81,71 +81,84 @@ export const checkServiceWorkerStatus = async (): Promise<boolean> => {
  * @param {number} [maxRetries=3] - 最大リトライ回数
  * @returns {Promise<Object|null>} Service Workerからの応答、失敗時はnull
  */
-export const sendMessageSafely = async (message: any, maxRetries: number = 3): Promise<any | null> => {
-    // 拡張機能のコンテキストが有効かチェック
-    if (!checkExtensionContext()) {
-        console.log('拡張機能のコンテキストが無効なため、メッセージ送信をスキップします');
-        return null;
-    }
-
-    // Service Workerの状態を事前確認
-    const isServiceWorkerActive = await checkServiceWorkerStatus();
-    if (!isServiceWorkerActive) {
-        console.log('Service Workerが非アクティブです。起動を待機中...');
-        // Service Workerの起動を待つ
-        await new Promise(resolve => setTimeout(resolve, 500));
-    }
-
-    let retryCount = 0;
-    
-    while (retryCount <= maxRetries) {
-        try {
-            // Service Workerが起動するまで待機時間を増やす
-            if (retryCount > 0) {
-                const waitTime = Math.min(200 * Math.pow(2, retryCount - 1), 2000); // 指数バックオフ（最大2秒）
-                console.log(`Service Worker起動待機中... (${waitTime}ms)`);
-                await new Promise(resolve => setTimeout(resolve, waitTime));
-            }
-            
-            console.log(`メッセージを送信中 (試行 ${retryCount + 1}/${maxRetries + 1}):`, message.action);
-            const response = await chrome.runtime.sendMessage(message);
-            console.log('メッセージ送信成功:', { action: message.action, response });
-            return response;
-        } catch (error) {
-            retryCount++;
-            const errorMessage = (error as Error).message;
-            
-            // Service Workerが非アクティブまたはコンテキストが無効な場合
-            if (errorMessage.includes('Extension context invalidated') || 
-                errorMessage.includes('Could not establish connection') ||
-                errorMessage.includes('receiving end does not exist') ||
-                errorMessage.includes('Receiving end does not exist')) {
-                
-                console.log(`メッセージ送信試行 ${retryCount}/${maxRetries + 1} 失敗:`, {
-                    error: errorMessage,
-                    action: message.action
-                });
-                
-                // 最後の試行でも失敗した場合
-                if (retryCount > maxRetries) {
-                    console.log('拡張機能との接続に失敗しました。メッセージ送信をスキップします。');
-                    return null;
-                }
-                
-                // リトライを続行
-                continue;
-            }
-            
-            // その他のエラーの場合は即座に失敗
-            console.error('予期しないメッセージ送信エラー:', {
-                error: errorMessage,
-                action: message.action,
-                stack: (error as Error).stack
-            });
-            return null;
-        }
-    }
-    
+export const sendMessageSafely = async (
+  message: any,
+  maxRetries: number = 3,
+): Promise<any | null> => {
+  // 拡張機能のコンテキストが有効かチェック
+  if (!checkExtensionContext()) {
+    console.log(
+      '拡張機能のコンテキストが無効なため、メッセージ送信をスキップします',
+    );
     return null;
-};
+  }
 
+  // Service Workerの状態を事前確認
+  const isServiceWorkerActive = await checkServiceWorkerStatus();
+  if (!isServiceWorkerActive) {
+    console.log('Service Workerが非アクティブです。起動を待機中...');
+    // Service Workerの起動を待つ
+    await new Promise((resolve) => setTimeout(resolve, 500));
+  }
+
+  let retryCount = 0;
+
+  while (retryCount <= maxRetries) {
+    try {
+      // Service Workerが起動するまで待機時間を増やす
+      if (retryCount > 0) {
+        const waitTime = Math.min(200 * 2 ** (retryCount - 1), 2000); // 指数バックオフ（最大2秒）
+        console.log(`Service Worker起動待機中... (${waitTime}ms)`);
+        await new Promise((resolve) => setTimeout(resolve, waitTime));
+      }
+
+      console.log(
+        `メッセージを送信中 (試行 ${retryCount + 1}/${maxRetries + 1}):`,
+        message.action,
+      );
+      const response = await chrome.runtime.sendMessage(message);
+      console.log('メッセージ送信成功:', { action: message.action, response });
+      return response;
+    } catch (error) {
+      retryCount++;
+      const errorMessage = (error as Error).message;
+
+      // Service Workerが非アクティブまたはコンテキストが無効な場合
+      if (
+        errorMessage.includes('Extension context invalidated') ||
+        errorMessage.includes('Could not establish connection') ||
+        errorMessage.includes('receiving end does not exist') ||
+        errorMessage.includes('Receiving end does not exist')
+      ) {
+        console.log(
+          `メッセージ送信試行 ${retryCount}/${maxRetries + 1} 失敗:`,
+          {
+            error: errorMessage,
+            action: message.action,
+          },
+        );
+
+        // 最後の試行でも失敗した場合
+        if (retryCount > maxRetries) {
+          console.log(
+            '拡張機能との接続に失敗しました。メッセージ送信をスキップします。',
+          );
+          return null;
+        }
+
+        // リトライを続行
+        continue;
+      }
+
+      // その他のエラーの場合は即座に失敗
+      console.error('予期しないメッセージ送信エラー:', {
+        error: errorMessage,
+        action: message.action,
+        stack: (error as Error).stack,
+      });
+      return null;
+    }
+  }
+
+  return null;
+};

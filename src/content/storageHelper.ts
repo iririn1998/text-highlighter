@@ -6,10 +6,10 @@ import { getStorageKey } from '../shared/utils';
 import { checkExtensionContext, sendMessageSafely } from './extensionContext';
 
 interface HighlightDataStorage {
-    domain: string;
-    url: string;
-    highlights: any[];
-    lastUpdated: number;
+  domain: string;
+  url: string;
+  highlights: any[];
+  lastUpdated: number;
 }
 
 /**
@@ -19,77 +19,101 @@ interface HighlightDataStorage {
  * @param {string} key - ストレージキー
  * @returns {Promise<Array<string>>} 各保存方法の結果の配列
  */
-export const saveHighlightDataReliable = async (data: any, key: string): Promise<string[]> => {
-    const saveResults: string[] = [];
-    
-    // 方法1: localStorage（最優先 - コンテキスト無効化の影響を受けない）
-    try {
-        localStorage.setItem(key, JSON.stringify(data));
-        saveResults.push('localStorage: 成功');
-        console.log('✅ localStorage保存成功（最優先）');
-    } catch (error) {
-        saveResults.push(`localStorage: 失敗 - ${(error as Error).message}`);
-        console.error('❌ localStorage保存失敗:', error);
+export const saveHighlightDataReliable = async (
+  data: any,
+  key: string,
+): Promise<string[]> => {
+  const saveResults: string[] = [];
+
+  // 方法1: localStorage（最優先 - コンテキスト無効化の影響を受けない）
+  try {
+    localStorage.setItem(key, JSON.stringify(data));
+    saveResults.push('localStorage: 成功');
+    console.log('✅ localStorage保存成功（最優先）');
+  } catch (error) {
+    saveResults.push(`localStorage: 失敗 - ${(error as Error).message}`);
+    console.error('❌ localStorage保存失敗:', error);
+  }
+
+  // 方法2: chrome.storage.local 直接アクセス（コンテキスト確認付き）
+  try {
+    // 拡張機能のコンテキストが有効かチェック（chrome.storageの存在も確認）
+    if (
+      chrome?.runtime?.id &&
+      chrome?.storage?.local &&
+      checkExtensionContext()
+    ) {
+      await chrome.storage.local.set({ [key]: data });
+      saveResults.push('chrome.storage.local: 成功');
+      console.log('✅ chrome.storage.local保存成功');
+    } else {
+      const reason = !chrome
+        ? 'chromeオブジェクトなし'
+        : !chrome.runtime
+          ? 'chrome.runtimeなし'
+          : !chrome.runtime.id
+            ? 'chrome.runtime.idなし'
+            : !chrome.storage
+              ? 'chrome.storageなし'
+              : !chrome.storage.local
+                ? 'chrome.storage.localなし'
+                : 'checkExtensionContext失敗';
+      saveResults.push(`chrome.storage.local: コンテキスト無効 (${reason})`);
+      console.log(
+        '⚠️ chrome.storage.local: 拡張機能コンテキストが無効です -',
+        reason,
+      );
     }
-    
-    // 方法2: chrome.storage.local 直接アクセス（コンテキスト確認付き）
-    try {
-        // 拡張機能のコンテキストが有効かチェック（chrome.storageの存在も確認）
-        if (chrome?.runtime?.id && chrome?.storage?.local && checkExtensionContext()) {
-            await chrome.storage.local.set({ [key]: data });
-            saveResults.push('chrome.storage.local: 成功');
-            console.log('✅ chrome.storage.local保存成功');
-        } else {
-            const reason = !chrome ? 'chromeオブジェクトなし' : 
-                          !chrome.runtime ? 'chrome.runtimeなし' :
-                          !chrome.runtime.id ? 'chrome.runtime.idなし' :
-                          !chrome.storage ? 'chrome.storageなし' :
-                          !chrome.storage.local ? 'chrome.storage.localなし' :
-                          'checkExtensionContext失敗';
-            saveResults.push(`chrome.storage.local: コンテキスト無効 (${reason})`);
-            console.log('⚠️ chrome.storage.local: 拡張機能コンテキストが無効です -', reason);
-        }
-    } catch (error) {
-        const errorMessage = (error as Error).message;
-        saveResults.push(`chrome.storage.local: 失敗 - ${errorMessage}`);
-        console.error('❌ chrome.storage.local保存失敗:', error);
-        
-        // Extension context invalidated の場合は特別な処理
-        if (errorMessage.includes('Extension context invalidated')) {
-            console.log('🔄 拡張機能コンテキストが無効化されました。ページリロードを推奨します。');
-            
-            // ユーザーに通知（1回だけ）
-            if (!(window as any).extensionContextInvalidatedNotified) {
-                (window as any).extensionContextInvalidatedNotified = true;
-                setTimeout(() => {
-                    if (confirm('ハイライト拡張機能のコンテキストが無効化されました。\nページをリロードしてハイライト機能を復旧しますか？')) {
-                        window.location.reload();
-                    }
-                }, 1000);
-            }
-        }
+  } catch (error) {
+    const errorMessage = (error as Error).message;
+    saveResults.push(`chrome.storage.local: 失敗 - ${errorMessage}`);
+    console.error('❌ chrome.storage.local保存失敗:', error);
+
+    // Extension context invalidated の場合は特別な処理
+    if (errorMessage.includes('Extension context invalidated')) {
+      console.log(
+        '🔄 拡張機能コンテキストが無効化されました。ページリロードを推奨します。',
+      );
+
+      // ユーザーに通知（1回だけ）
+      if (!(window as any).extensionContextInvalidatedNotified) {
+        (window as any).extensionContextInvalidatedNotified = true;
+        setTimeout(() => {
+          if (
+            confirm(
+              'ハイライト拡張機能のコンテキストが無効化されました。\nページをリロードしてハイライト機能を復旧しますか？',
+            )
+          ) {
+            window.location.reload();
+          }
+        }, 1000);
+      }
     }
-    
-    // 方法3: Service Worker経由（最後に試行）
-    try {
-        const response = await sendMessageSafely({
-            action: 'saveToStorage',
-            key: key,
-            data: data
-        }, 1); // リトライ回数を1回に制限
-        
-        if (response?.success) {
-            saveResults.push('Service Worker: 成功');
-            console.log('✅ Service Worker保存成功');
-        } else {
-            saveResults.push('Service Worker: 応答なしまたは失敗');
-        }
-    } catch (error) {
-        saveResults.push(`Service Worker: 例外 - ${(error as Error).message}`);
+  }
+
+  // 方法3: Service Worker経由（最後に試行）
+  try {
+    const response = await sendMessageSafely(
+      {
+        action: 'saveToStorage',
+        key: key,
+        data: data,
+      },
+      1,
+    ); // リトライ回数を1回に制限
+
+    if (response?.success) {
+      saveResults.push('Service Worker: 成功');
+      console.log('✅ Service Worker保存成功');
+    } else {
+      saveResults.push('Service Worker: 応答なしまたは失敗');
     }
-    
-    console.log('🔄 保存結果:', saveResults);
-    return saveResults;
+  } catch (error) {
+    saveResults.push(`Service Worker: 例外 - ${(error as Error).message}`);
+  }
+
+  console.log('🔄 保存結果:', saveResults);
+  return saveResults;
 };
 
 /**
@@ -98,80 +122,99 @@ export const saveHighlightDataReliable = async (data: any, key: string): Promise
  * @param {string} key - ストレージキー
  * @returns {Promise<Object|null>} 読み込まれたデータ、見つからない場合はnull
  */
-export const loadHighlightDataReliable = async (key: string): Promise<any | null> => {
-    let loadedData: any = null;
-    const loadResults: string[] = [];
-    
-    // 方法1: localStorage（最優先 - コンテキスト無効化の影響を受けない）
+export const loadHighlightDataReliable = async (
+  key: string,
+): Promise<any | null> => {
+  let loadedData: any = null;
+  const loadResults: string[] = [];
+
+  // 方法1: localStorage（最優先 - コンテキスト無効化の影響を受けない）
+  try {
+    const localData = localStorage.getItem(key);
+    if (localData) {
+      loadedData = JSON.parse(localData);
+      loadResults.push('localStorage: 成功');
+      console.log('✅ localStorage読み込み成功（最優先）');
+    } else {
+      loadResults.push('localStorage: データなし');
+    }
+  } catch (error) {
+    loadResults.push(`localStorage: 失敗 - ${(error as Error).message}`);
+    console.error('❌ localStorage読み込み失敗:', error);
+  }
+
+  // 方法2: chrome.storage.local 直接アクセス（コンテキスト確認付き）
+  try {
+    // 拡張機能のコンテキストが有効かチェック（chrome.storageの存在も確認）
+    if (
+      chrome?.runtime?.id &&
+      chrome?.storage?.local &&
+      checkExtensionContext()
+    ) {
+      const result = await chrome.storage.local.get([key]);
+      if (result[key]) {
+        loadedData = result[key];
+        loadResults.push('chrome.storage.local: 成功');
+        console.log('✅ chrome.storage.local読み込み成功');
+      } else {
+        loadResults.push('chrome.storage.local: データなし');
+      }
+    } else {
+      const reason = !chrome
+        ? 'chromeオブジェクトなし'
+        : !chrome.runtime
+          ? 'chrome.runtimeなし'
+          : !chrome.runtime.id
+            ? 'chrome.runtime.idなし'
+            : !chrome.storage
+              ? 'chrome.storageなし'
+              : !chrome.storage.local
+                ? 'chrome.storage.localなし'
+                : 'checkExtensionContext失敗';
+      loadResults.push(`chrome.storage.local: コンテキスト無効 (${reason})`);
+      console.log(
+        '⚠️ chrome.storage.local: 拡張機能コンテキストが無効です -',
+        reason,
+      );
+    }
+  } catch (error) {
+    const errorMessage = (error as Error).message;
+    loadResults.push(`chrome.storage.local: 失敗 - ${errorMessage}`);
+    console.error('❌ chrome.storage.local読み込み失敗:', error);
+
+    // Extension context invalidated の場合は特別な処理
+    if (errorMessage.includes('Extension context invalidated')) {
+      console.log(
+        '🔄 拡張機能コンテキストが無効化されました。ページリロードを推奨します。',
+      );
+    }
+  }
+
+  // 方法3: Service Worker経由（最後に試行）
+  if (!loadedData) {
     try {
-        const localData = localStorage.getItem(key);
-        if (localData) {
-            loadedData = JSON.parse(localData);
-            loadResults.push('localStorage: 成功');
-            console.log('✅ localStorage読み込み成功（最優先）');
-        } else {
-            loadResults.push('localStorage: データなし');
-        }
+      const response = await sendMessageSafely(
+        {
+          action: 'loadFromStorage',
+          key: key,
+        },
+        1,
+      ); // リトライ回数を1回に制限
+
+      if (response?.success && response.data) {
+        loadedData = response.data;
+        loadResults.push('Service Worker: 成功');
+        console.log('✅ Service Worker読み込み成功');
+      } else {
+        loadResults.push('Service Worker: データなしまたは失敗');
+      }
     } catch (error) {
-        loadResults.push(`localStorage: 失敗 - ${(error as Error).message}`);
-        console.error('❌ localStorage読み込み失敗:', error);
+      loadResults.push(`Service Worker: 例外 - ${(error as Error).message}`);
     }
-    
-    // 方法2: chrome.storage.local 直接アクセス（コンテキスト確認付き）
-    try {
-        // 拡張機能のコンテキストが有効かチェック（chrome.storageの存在も確認）
-        if (chrome?.runtime?.id && chrome?.storage?.local && checkExtensionContext()) {
-            const result = await chrome.storage.local.get([key]);
-            if (result[key]) {
-                loadedData = result[key];
-                loadResults.push('chrome.storage.local: 成功');
-                console.log('✅ chrome.storage.local読み込み成功');
-            } else {
-                loadResults.push('chrome.storage.local: データなし');
-            }
-        } else {
-            const reason = !chrome ? 'chromeオブジェクトなし' : 
-                          !chrome.runtime ? 'chrome.runtimeなし' :
-                          !chrome.runtime.id ? 'chrome.runtime.idなし' :
-                          !chrome.storage ? 'chrome.storageなし' :
-                          !chrome.storage.local ? 'chrome.storage.localなし' :
-                          'checkExtensionContext失敗';
-            loadResults.push(`chrome.storage.local: コンテキスト無効 (${reason})`);
-            console.log('⚠️ chrome.storage.local: 拡張機能コンテキストが無効です -', reason);
-        }
-    } catch (error) {
-        const errorMessage = (error as Error).message;
-        loadResults.push(`chrome.storage.local: 失敗 - ${errorMessage}`);
-        console.error('❌ chrome.storage.local読み込み失敗:', error);
-        
-        // Extension context invalidated の場合は特別な処理
-        if (errorMessage.includes('Extension context invalidated')) {
-            console.log('🔄 拡張機能コンテキストが無効化されました。ページリロードを推奨します。');
-        }
-    }
-    
-    // 方法3: Service Worker経由（最後に試行）
-    if (!loadedData) {
-        try {
-            const response = await sendMessageSafely({
-                action: 'loadFromStorage',
-                key: key
-            }, 1); // リトライ回数を1回に制限
-            
-            if (response?.success && response.data) {
-                loadedData = response.data;
-                loadResults.push('Service Worker: 成功');
-                console.log('✅ Service Worker読み込み成功');
-            } else {
-                loadResults.push('Service Worker: データなしまたは失敗');
-            }
-        } catch (error) {
-            loadResults.push(`Service Worker: 例外 - ${(error as Error).message}`);
-        }
-    }
-    
-    console.log('🔄 読み込み結果:', loadResults);
-    return loadedData;
+  }
+
+  console.log('🔄 読み込み結果:', loadResults);
+  return loadedData;
 };
 
 /**
@@ -180,60 +223,67 @@ export const loadHighlightDataReliable = async (key: string): Promise<any | null
  * @param {string} currentDomain - 現在のドメイン
  * @returns {Promise<void>}
  */
-export const saveHighlightData = async (highlightData: any[], currentDomain: string): Promise<void> => {
-    try {
-        const key = getStorageKey(currentDomain);
-        
-        // キーの有効性をチェック
-        if (!key) {
-            console.error('ハイライトデータ保存エラー: ストレージキーが無効です', { currentDomain });
-            return;
-        }
-        
-        const data: HighlightDataStorage = {
-            domain: currentDomain,
-            url: window.location.href,
-            highlights: highlightData,
-            lastUpdated: Date.now()
-        };
-        
-        console.log('📝 ハイライトデータを保存中...', { key, dataLength: highlightData.length });
-        
-        // 新しい確実な保存方法を使用
-        const results = await saveHighlightDataReliable(data, key);
-        
-        // 成功した保存方法があるかチェック
-        const hasSuccess = results.some(result => result.includes('成功'));
-        
-        if (hasSuccess) {
-            console.log('✅ ハイライトデータ保存完了:', results);
-        } else {
-            console.error('❌ 全ての保存方法が失敗しました:', results);
-        }
-        
-    } catch (error) {
-        console.error('ハイライトデータ保存エラー (例外):', {
-            error: (error as Error).message,
-            stack: (error as Error).stack,
-            currentDomain: currentDomain,
-            highlightDataLength: highlightData?.length
-        });
-        
-        // 例外時の緊急保存
-        try {
-            const key = getStorageKey(currentDomain);
-            const data: HighlightDataStorage = {
-                domain: currentDomain,
-                url: window.location.href,
-                highlights: highlightData,
-                lastUpdated: Date.now()
-            };
-            localStorage.setItem(key, JSON.stringify(data));
-            console.log('🚨 緊急保存: localStorageに保存しました');
-        } catch (emergencyError) {
-            console.error('🚨 緊急保存も失敗:', emergencyError);
-        }
+export const saveHighlightData = async (
+  highlightData: any[],
+  currentDomain: string,
+): Promise<void> => {
+  try {
+    const key = getStorageKey(currentDomain);
+
+    // キーの有効性をチェック
+    if (!key) {
+      console.error('ハイライトデータ保存エラー: ストレージキーが無効です', {
+        currentDomain,
+      });
+      return;
     }
+
+    const data: HighlightDataStorage = {
+      domain: currentDomain,
+      url: window.location.href,
+      highlights: highlightData,
+      lastUpdated: Date.now(),
+    };
+
+    console.log('📝 ハイライトデータを保存中...', {
+      key,
+      dataLength: highlightData.length,
+    });
+
+    // 新しい確実な保存方法を使用
+    const results = await saveHighlightDataReliable(data, key);
+
+    // 成功した保存方法があるかチェック
+    const hasSuccess = results.some((result) => result.includes('成功'));
+
+    if (hasSuccess) {
+      console.log('✅ ハイライトデータ保存完了:', results);
+    } else {
+      console.error('❌ 全ての保存方法が失敗しました:', results);
+    }
+  } catch (error) {
+    console.error('ハイライトデータ保存エラー (例外):', {
+      error: (error as Error).message,
+      stack: (error as Error).stack,
+      currentDomain: currentDomain,
+      highlightDataLength: highlightData?.length,
+    });
+
+    // 例外時の緊急保存
+    try {
+      const key = getStorageKey(currentDomain);
+      const data: HighlightDataStorage = {
+        domain: currentDomain,
+        url: window.location.href,
+        highlights: highlightData,
+        lastUpdated: Date.now(),
+      };
+      localStorage.setItem(key, JSON.stringify(data));
+      console.log('🚨 緊急保存: localStorageに保存しました');
+    } catch (emergencyError) {
+      console.error('🚨 緊急保存も失敗:', emergencyError);
+    }
+  }
 };
 
 /**
@@ -241,45 +291,53 @@ export const saveHighlightData = async (highlightData: any[], currentDomain: str
  * @param {string} currentDomain - 現在のドメイン
  * @returns {Promise<Array>} 読み込まれたハイライトデータ
  */
-export const loadHighlightData = async (currentDomain: string): Promise<any[]> => {
-    try {
-        const key = getStorageKey(currentDomain);
-        console.log('📖 ハイライトデータを読み込み中...', key);
-        
-        // 新しい確実な読み込み方法を使用
-        const loadedData = await loadHighlightDataReliable(key);
-        
-        if (loadedData) {
-            const highlightData = loadedData.highlights || [];
-            console.log('✅ ハイライトデータ読み込み完了:', highlightData.length, '件');
-            return highlightData;
-        } else {
-            console.log('ℹ️ 保存されたハイライトデータがありません:', key);
-            return [];
-        }
-        
-    } catch (error) {
-        console.error('ハイライトデータ読み込みエラー (例外):', {
-            error: (error as Error).message,
-            stack: (error as Error).stack
-        });
-        
-        // 例外時の緊急読み込み
-        try {
-            const key = getStorageKey(currentDomain);
-            const localData = localStorage.getItem(key);
-            if (localData) {
-                const parsedData = JSON.parse(localData);
-                const highlightData = parsedData.highlights || [];
-                console.log('🚨 緊急読み込み: localStorageから', highlightData.length, '件');
-                return highlightData;
-            } else {
-                return [];
-            }
-        } catch (emergencyError) {
-            console.error('🚨 緊急読み込みも失敗:', emergencyError);
-            return [];
-        }
-    }
-};
+export const loadHighlightData = async (
+  currentDomain: string,
+): Promise<any[]> => {
+  try {
+    const key = getStorageKey(currentDomain);
+    console.log('📖 ハイライトデータを読み込み中...', key);
 
+    // 新しい確実な読み込み方法を使用
+    const loadedData = await loadHighlightDataReliable(key);
+
+    if (loadedData) {
+      const highlightData = loadedData.highlights || [];
+      console.log(
+        '✅ ハイライトデータ読み込み完了:',
+        highlightData.length,
+        '件',
+      );
+      return highlightData;
+    } else {
+      console.log('ℹ️ 保存されたハイライトデータがありません:', key);
+      return [];
+    }
+  } catch (error) {
+    console.error('ハイライトデータ読み込みエラー (例外):', {
+      error: (error as Error).message,
+      stack: (error as Error).stack,
+    });
+
+    // 例外時の緊急読み込み
+    try {
+      const key = getStorageKey(currentDomain);
+      const localData = localStorage.getItem(key);
+      if (localData) {
+        const parsedData = JSON.parse(localData);
+        const highlightData = parsedData.highlights || [];
+        console.log(
+          '🚨 緊急読み込み: localStorageから',
+          highlightData.length,
+          '件',
+        );
+        return highlightData;
+      } else {
+        return [];
+      }
+    } catch (emergencyError) {
+      console.error('🚨 緊急読み込みも失敗:', emergencyError);
+      return [];
+    }
+  }
+};

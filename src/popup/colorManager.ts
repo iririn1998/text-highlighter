@@ -5,8 +5,8 @@
 import { CONSTANTS } from '../shared/constants';
 
 interface ColorInfo {
-    color: string;
-    name: string;
+  color: string;
+  name: string;
 }
 
 // 現在の色データ
@@ -18,10 +18,10 @@ let currentColorName = '黄色';
  * @returns {Object} 現在の色情報
  */
 export const getCurrentColor = (): ColorInfo => {
-    return {
-        color: currentHighlightColor,
-        name: currentColorName
-    };
+  return {
+    color: currentHighlightColor,
+    name: currentColorName,
+  };
 };
 
 /**
@@ -30,9 +30,9 @@ export const getCurrentColor = (): ColorInfo => {
  * @param {string} colorName - 色の名前
  */
 export const selectColor = (color: string, colorName: string): void => {
-    currentHighlightColor = color;
-    currentColorName = colorName;
-    saveCurrentColor();
+  currentHighlightColor = color;
+  currentColorName = colorName;
+  saveCurrentColor();
 };
 
 /**
@@ -40,14 +40,14 @@ export const selectColor = (color: string, colorName: string): void => {
  * @returns {Promise<void>}
  */
 const saveCurrentColor = async (): Promise<void> => {
-    try {
-        await chrome.storage.sync.set({ 
-            [CONSTANTS.STORAGE_KEYS.CURRENT_HIGHLIGHT_COLOR]: currentHighlightColor,
-            [CONSTANTS.STORAGE_KEYS.CURRENT_COLOR_NAME]: currentColorName
-        });
-    } catch (error) {
-        console.error('現在の色保存エラー:', error);
-    }
+  try {
+    await chrome.storage.sync.set({
+      [CONSTANTS.STORAGE_KEYS.CURRENT_HIGHLIGHT_COLOR]: currentHighlightColor,
+      [CONSTANTS.STORAGE_KEYS.CURRENT_COLOR_NAME]: currentColorName,
+    });
+  } catch (error) {
+    console.error('現在の色保存エラー:', error);
+  }
 };
 
 /**
@@ -55,17 +55,18 @@ const saveCurrentColor = async (): Promise<void> => {
  * @returns {Promise<void>}
  */
 export const loadCurrentColor = async (): Promise<void> => {
-    try {
-        const result = await chrome.storage.sync.get([
-            CONSTANTS.STORAGE_KEYS.CURRENT_HIGHLIGHT_COLOR, 
-            CONSTANTS.STORAGE_KEYS.CURRENT_COLOR_NAME
-        ]);
-        if (result[CONSTANTS.STORAGE_KEYS.CURRENT_HIGHLIGHT_COLOR]) {
-            currentHighlightColor = result[CONSTANTS.STORAGE_KEYS.CURRENT_HIGHLIGHT_COLOR];
-            currentColorName = result[CONSTANTS.STORAGE_KEYS.CURRENT_COLOR_NAME] || '選択された色';
-        }
-    } catch (error) {
-        console.error('現在の色読み込みエラー:', error);
+  try {
+    const result = await chrome.storage.sync.get([
+      CONSTANTS.STORAGE_KEYS.CURRENT_HIGHLIGHT_COLOR,
+      CONSTANTS.STORAGE_KEYS.CURRENT_COLOR_NAME,
+    ]);
+    if (result[CONSTANTS.STORAGE_KEYS.CURRENT_HIGHLIGHT_COLOR]) {
+      currentHighlightColor =
+        result[CONSTANTS.STORAGE_KEYS.CURRENT_HIGHLIGHT_COLOR];
+      currentColorName =
+        result[CONSTANTS.STORAGE_KEYS.CURRENT_COLOR_NAME] || '選択された色';
     }
+  } catch (error) {
+    console.error('現在の色読み込みエラー:', error);
+  }
 };
-

@@ -4,30 +4,30 @@
 
 import { CONSTANTS } from '../shared/constants';
 import {
-    generateHighlightId,
-    getElementByXPath,
-    getRangeFromElement,
-    getTextNodes,
-    getXPath,
-    rangesOverlap
+  generateHighlightId,
+  getElementByXPath,
+  getRangeFromElement,
+  getTextNodes,
+  getXPath,
+  rangesOverlap,
 } from '../shared/utils';
 import { saveHighlightData } from './storageHelper';
 import {
-    clearContextMenuSelection,
-    clearSelection,
-    findTextInPage,
-    getContextMenuSelection,
-    getSelectedRange,
-    getSelectedText,
-    getTextNodesInRange
+  clearContextMenuSelection,
+  clearSelection,
+  findTextInPage,
+  getContextMenuSelection,
+  getSelectedRange,
+  getSelectedText,
+  getTextNodesInRange,
 } from './textSelection';
 
 interface HighlightInfo {
-    id: string;
-    xpath: string;
-    text: string;
-    color: string;
-    timestamp: number;
+  id: string;
+  xpath: string;
+  text: string;
+  color: string;
+  timestamp: number;
 }
 
 // ハイライトデータ
@@ -39,7 +39,7 @@ let currentDomain = '';
  * @returns {Array} ハイライトデータ配列
  */
 export const getHighlightData = (): HighlightInfo[] => {
-    return highlightData;
+  return highlightData;
 };
 
 /**
@@ -47,7 +47,7 @@ export const getHighlightData = (): HighlightInfo[] => {
  * @param {Array} data - 設定するハイライトデータ
  */
 export const setHighlightData = (data: HighlightInfo[]): void => {
-    highlightData = data;
+  highlightData = data;
 };
 
 /**
@@ -55,7 +55,7 @@ export const setHighlightData = (data: HighlightInfo[]): void => {
  * @param {string} domain - 現在のドメイン
  */
 export const setCurrentDomain = (domain: string): void => {
-    currentDomain = domain;
+  currentDomain = domain;
 };
 
 /**
@@ -64,58 +64,75 @@ export const setCurrentDomain = (domain: string): void => {
  * @returns {boolean} ハイライト適用が成功した場合はtrue
  */
 export const applyHighlight = (color: string): boolean => {
-    const selectedRange = getSelectedRange();
-    if (!selectedRange) {
-        console.log('選択されたテキストがありません');
-        return false;
+  const selectedRange = getSelectedRange();
+  if (!selectedRange) {
+    console.log('選択されたテキストがありません');
+    return false;
+  }
+
+  try {
+    // 既存のハイライトを確認し、重複している場合は削除
+    removeOverlappingHighlights(selectedRange);
+
+    // 改行を含むかチェック
+    const selectedTextContent = selectedRange.toString();
+    if (
+      selectedTextContent.includes('\n') ||
+      selectedTextContent.includes('\r')
+    ) {
+      console.log(
+        '選択範囲に改行が含まれているため、テキストノード単位でハイライトを適用します',
+      );
+      return applyHighlightToTextNodes(selectedRange, color);
     }
 
+    // ハイライト要素を作成
+    const highlightSpan = document.createElement('span');
+    highlightSpan.className = CONSTANTS.HIGHLIGHT_CLASS;
+    highlightSpan.style.backgroundColor = color;
+    highlightSpan.setAttribute(CONSTANTS.DATA_HIGHLIGHT_COLOR, color);
+    highlightSpan.setAttribute(
+      CONSTANTS.DATA_HIGHLIGHT_ID,
+      generateHighlightId(),
+    );
+
+    // 選択範囲をハイライト要素で囲む
     try {
-        // 既存のハイライトを確認し、重複している場合は削除
-        removeOverlappingHighlights(selectedRange);
-        
-        // 改行を含むかチェック
-        const selectedTextContent = selectedRange.toString();
-        if (selectedTextContent.includes('\n') || selectedTextContent.includes('\r')) {
-            console.log('選択範囲に改行が含まれているため、テキストノード単位でハイライトを適用します');
-            return applyHighlightToTextNodes(selectedRange, color);
+      selectedRange.surroundContents(highlightSpan);
+      console.log('ハイライトを適用しました:', color);
+
+      // ハイライト情報を保存
+      const parentElement = highlightSpan.parentElement;
+      if (parentElement) {
+        const highlightId = highlightSpan.getAttribute(
+          CONSTANTS.DATA_HIGHLIGHT_ID,
+        );
+        if (highlightId) {
+          addHighlightInfo(
+            parentElement,
+            getSelectedText(),
+            color,
+            highlightId,
+          );
         }
-        
-        // ハイライト要素を作成
-        const highlightSpan = document.createElement('span');
-        highlightSpan.className = CONSTANTS.HIGHLIGHT_CLASS;
-        highlightSpan.style.backgroundColor = color;
-        highlightSpan.setAttribute(CONSTANTS.DATA_HIGHLIGHT_COLOR, color);
-        highlightSpan.setAttribute(CONSTANTS.DATA_HIGHLIGHT_ID, generateHighlightId());
-        
-        // 選択範囲をハイライト要素で囲む
-        try {
-            selectedRange.surroundContents(highlightSpan);
-            console.log('ハイライトを適用しました:', color);
-            
-            // ハイライト情報を保存
-            const parentElement = highlightSpan.parentElement;
-            if (parentElement) {
-                const highlightId = highlightSpan.getAttribute(CONSTANTS.DATA_HIGHLIGHT_ID);
-                if (highlightId) {
-                    addHighlightInfo(parentElement, getSelectedText(), color, highlightId);
-                }
-            }
-            
-            // 選択を解除
-            window.getSelection()?.removeAllRanges();
-            clearSelection();
-            
-            return true;
-        } catch (error) {
-            // 複雑な選択範囲の場合はテキストノード単位で処理
-            console.log('範囲が複雑なため、テキストノード単位でハイライトを適用します');
-            return applyHighlightToTextNodes(selectedRange, color);
-        }
-    } catch (error) {
-        console.error('ハイライト適用エラー:', error);
-        return false;
+      }
+
+      // 選択を解除
+      window.getSelection()?.removeAllRanges();
+      clearSelection();
+
+      return true;
+    } catch (_error) {
+      // 複雑な選択範囲の場合はテキストノード単位で処理
+      console.log(
+        '範囲が複雑なため、テキストノード単位でハイライトを適用します',
+      );
+      return applyHighlightToTextNodes(selectedRange, color);
     }
+  } catch (error) {
+    console.error('ハイライト適用エラー:', error);
+    return false;
+  }
 };
 
 /**
@@ -125,24 +142,24 @@ export const applyHighlight = (color: string): boolean => {
  * @returns {boolean} ハイライト適用が成功した場合はtrue
  */
 export const applyHighlightToText = (text: string, color: string): boolean => {
-    try {
-        console.log('コンテキストメニューからのハイライト適用:', text, color);
-        
-        // ページ内で該当テキストを検索
-        const range = findTextInPage(text);
-        if (range) {
-            // ハイライトを適用
-            const success = applyHighlightToRange(range, color);
-            
-            return success;
-        } else {
-            console.log('指定されたテキストが見つかりませんでした:', text);
-            return false;
-        }
-    } catch (error) {
-        console.error('コンテキストハイライト適用エラー:', error);
-        return false;
+  try {
+    console.log('コンテキストメニューからのハイライト適用:', text, color);
+
+    // ページ内で該当テキストを検索
+    const range = findTextInPage(text);
+    if (range) {
+      // ハイライトを適用
+      const success = applyHighlightToRange(range, color);
+
+      return success;
+    } else {
+      console.log('指定されたテキストが見つかりませんでした:', text);
+      return false;
     }
+  } catch (error) {
+    console.error('コンテキストハイライト適用エラー:', error);
+    return false;
+  }
 };
 
 /**
@@ -152,22 +169,26 @@ export const applyHighlightToText = (text: string, color: string): boolean => {
  * @param {string} [id] - ハイライトのID（未指定の場合は新規生成）
  * @returns {boolean} ハイライト適用が成功した場合はtrue
  */
-export const applyHighlightToRange = (range: Range, color: string, id: string | null = null): boolean => {
-    try {
-        const highlightId = id || generateHighlightId();
-        const highlightSpan = document.createElement('span');
-        highlightSpan.className = CONSTANTS.HIGHLIGHT_CLASS;
-        highlightSpan.style.backgroundColor = color;
-        highlightSpan.setAttribute(CONSTANTS.DATA_HIGHLIGHT_COLOR, color);
-        highlightSpan.setAttribute(CONSTANTS.DATA_HIGHLIGHT_ID, highlightId);
-        
-        range.surroundContents(highlightSpan);
-        console.log('ハイライトを復元しました:', color, highlightId);
-        return true;
-    } catch (error) {
-        console.error('ハイライト復元適用エラー:', error);
-        return false;
-    }
+export const applyHighlightToRange = (
+  range: Range,
+  color: string,
+  id: string | null = null,
+): boolean => {
+  try {
+    const highlightId = id || generateHighlightId();
+    const highlightSpan = document.createElement('span');
+    highlightSpan.className = CONSTANTS.HIGHLIGHT_CLASS;
+    highlightSpan.style.backgroundColor = color;
+    highlightSpan.setAttribute(CONSTANTS.DATA_HIGHLIGHT_COLOR, color);
+    highlightSpan.setAttribute(CONSTANTS.DATA_HIGHLIGHT_ID, highlightId);
+
+    range.surroundContents(highlightSpan);
+    console.log('ハイライトを復元しました:', color, highlightId);
+    return true;
+  } catch (error) {
+    console.error('ハイライト復元適用エラー:', error);
+    return false;
+  }
 };
 
 /**
@@ -177,58 +198,64 @@ export const applyHighlightToRange = (range: Range, color: string, id: string | 
  * @returns {boolean} ハイライト適用が成功した場合はtrue
  */
 const applyHighlightToTextNodes = (range: Range, color: string): boolean => {
-    try {
-        // 範囲内のテキストノードを取得
-        const textNodes = getTextNodesInRange(range);
-        const highlightId = generateHighlightId();
-        let highlightApplied = false;
-        
-        textNodes.forEach((nodeInfo) => {
-            const { node, startOffset, endOffset } = nodeInfo;
-            
-            // 改行文字のみの場合はスキップ
-            const nodeText = node.textContent?.substring(startOffset, endOffset) || '';
-            if (!nodeText.trim() || nodeText === '\n' || nodeText === '\r' || nodeText === '\r\n') {
-                return;
-            }
-            
-            // ハイライト用の範囲を作成
-            const nodeRange = document.createRange();
-            nodeRange.setStart(node, startOffset);
-            nodeRange.setEnd(node, endOffset);
-            
-            // ハイライト要素を作成
-            const highlightSpan = document.createElement('span');
-            highlightSpan.className = CONSTANTS.HIGHLIGHT_CLASS;
-            highlightSpan.style.backgroundColor = color;
-            highlightSpan.setAttribute(CONSTANTS.DATA_HIGHLIGHT_COLOR, color);
-            highlightSpan.setAttribute(CONSTANTS.DATA_HIGHLIGHT_ID, highlightId);
-            
-            try {
-                nodeRange.surroundContents(highlightSpan);
-                
-                // ハイライト情報を保存（最初のハイライトのみ）
-                if (!highlightApplied) {
-                    const parentElement = highlightSpan.parentElement;
-                    if (parentElement) {
-                        addHighlightInfo(parentElement, nodeText, color, highlightId);
-                    }
-                    highlightApplied = true;
-                }
-            } catch (error) {
-                console.error('テキストノードハイライト適用エラー:', error);
-            }
-        });
-        
-        // 選択を解除
-        window.getSelection()?.removeAllRanges();
-        clearSelection();
-        
-        return highlightApplied;
-    } catch (error) {
-        console.error('テキストノード単位ハイライト適用エラー:', error);
-        return false;
-    }
+  try {
+    // 範囲内のテキストノードを取得
+    const textNodes = getTextNodesInRange(range);
+    const highlightId = generateHighlightId();
+    let highlightApplied = false;
+
+    textNodes.forEach((nodeInfo) => {
+      const { node, startOffset, endOffset } = nodeInfo;
+
+      // 改行文字のみの場合はスキップ
+      const nodeText =
+        node.textContent?.substring(startOffset, endOffset) || '';
+      if (
+        !nodeText.trim() ||
+        nodeText === '\n' ||
+        nodeText === '\r' ||
+        nodeText === '\r\n'
+      ) {
+        return;
+      }
+
+      // ハイライト用の範囲を作成
+      const nodeRange = document.createRange();
+      nodeRange.setStart(node, startOffset);
+      nodeRange.setEnd(node, endOffset);
+
+      // ハイライト要素を作成
+      const highlightSpan = document.createElement('span');
+      highlightSpan.className = CONSTANTS.HIGHLIGHT_CLASS;
+      highlightSpan.style.backgroundColor = color;
+      highlightSpan.setAttribute(CONSTANTS.DATA_HIGHLIGHT_COLOR, color);
+      highlightSpan.setAttribute(CONSTANTS.DATA_HIGHLIGHT_ID, highlightId);
+
+      try {
+        nodeRange.surroundContents(highlightSpan);
+
+        // ハイライト情報を保存（最初のハイライトのみ）
+        if (!highlightApplied) {
+          const parentElement = highlightSpan.parentElement;
+          if (parentElement) {
+            addHighlightInfo(parentElement, nodeText, color, highlightId);
+          }
+          highlightApplied = true;
+        }
+      } catch (error) {
+        console.error('テキストノードハイライト適用エラー:', error);
+      }
+    });
+
+    // 選択を解除
+    window.getSelection()?.removeAllRanges();
+    clearSelection();
+
+    return highlightApplied;
+  } catch (error) {
+    console.error('テキストノード単位ハイライト適用エラー:', error);
+    return false;
+  }
 };
 
 /**
@@ -236,22 +263,25 @@ const applyHighlightToTextNodes = (range: Range, color: string): boolean => {
  * @param {Range} range - チェックする範囲
  */
 const removeOverlappingHighlights = (range: Range): void => {
-    const highlights = document.querySelectorAll(`.${CONSTANTS.HIGHLIGHT_CLASS}`);
-    
-    highlights.forEach(highlight => {
-        // 範囲の重複を確認
-        if (rangesOverlap(range, getRangeFromElement(highlight))) {
-            // ハイライトを削除して元のテキストに戻す
-            const parent = highlight.parentNode;
-            if (parent) {
-                parent.insertBefore(document.createTextNode(highlight.textContent || ''), highlight);
-                parent.removeChild(highlight);
-                
-                // テキストノードを統合
-                parent.normalize();
-            }
-        }
-    });
+  const highlights = document.querySelectorAll(`.${CONSTANTS.HIGHLIGHT_CLASS}`);
+
+  highlights.forEach((highlight) => {
+    // 範囲の重複を確認
+    if (rangesOverlap(range, getRangeFromElement(highlight))) {
+      // ハイライトを削除して元のテキストに戻す
+      const parent = highlight.parentNode;
+      if (parent) {
+        parent.insertBefore(
+          document.createTextNode(highlight.textContent || ''),
+          highlight,
+        );
+        parent.removeChild(highlight);
+
+        // テキストノードを統合
+        parent.normalize();
+      }
+    }
+  });
 };
 
 /**
@@ -260,36 +290,39 @@ const removeOverlappingHighlights = (range: Range): void => {
  * @returns {boolean} 削除が成功した場合はtrue
  */
 export const removeHighlight = (targetElement: Element): boolean => {
-    if (!targetElement || !targetElement.classList.contains(CONSTANTS.HIGHLIGHT_CLASS)) {
-        console.log('削除対象のハイライトが見つかりません');
-        return false;
+  if (
+    !targetElement ||
+    !targetElement.classList.contains(CONSTANTS.HIGHLIGHT_CLASS)
+  ) {
+    console.log('削除対象のハイライトが見つかりません');
+    return false;
+  }
+
+  try {
+    const parent = targetElement.parentNode;
+    const textContent = targetElement.textContent || '';
+    const highlightId = targetElement.getAttribute(CONSTANTS.DATA_HIGHLIGHT_ID);
+
+    if (parent) {
+      // ハイライト要素を削除してテキストノードに置き換え
+      parent.insertBefore(document.createTextNode(textContent), targetElement);
+      parent.removeChild(targetElement);
+
+      // テキストノードを統合
+      parent.normalize();
     }
 
-    try {
-        const parent = targetElement.parentNode;
-        const textContent = targetElement.textContent || '';
-        const highlightId = targetElement.getAttribute(CONSTANTS.DATA_HIGHLIGHT_ID);
-        
-        if (parent) {
-            // ハイライト要素を削除してテキストノードに置き換え
-            parent.insertBefore(document.createTextNode(textContent), targetElement);
-            parent.removeChild(targetElement);
-            
-            // テキストノードを統合
-            parent.normalize();
-        }
-        
-        // ハイライト情報を削除
-        if (highlightId) {
-            removeHighlightInfo(highlightId);
-        }
-        
-        console.log('ハイライトを削除しました');
-        return true;
-    } catch (error) {
-        console.error('ハイライト削除エラー:', error);
-        return false;
+    // ハイライト情報を削除
+    if (highlightId) {
+      removeHighlightInfo(highlightId);
     }
+
+    console.log('ハイライトを削除しました');
+    return true;
+  } catch (error) {
+    console.error('ハイライト削除エラー:', error);
+    return false;
+  }
 };
 
 /**
@@ -298,19 +331,19 @@ export const removeHighlight = (targetElement: Element): boolean => {
  * @returns {Element|null} ハイライト要素が見つかった場合はその要素、見つからない場合はnull
  */
 export const findHighlightElement = (element: Element): Element | null => {
-    // 5レベルまで親要素を辿ってハイライト要素を探す
-    let current: Element | null = element;
-    let depth = 0;
-    
-    while (current && depth < CONSTANTS.LIMITS.HIGHLIGHT_ELEMENT_SEARCH_DEPTH) {
-        if (current.classList && current.classList.contains(CONSTANTS.HIGHLIGHT_CLASS)) {
-            return current;
-        }
-        current = current.parentElement;
-        depth++;
+  // 5レベルまで親要素を辿ってハイライト要素を探す
+  let current: Element | null = element;
+  let depth = 0;
+
+  while (current && depth < CONSTANTS.LIMITS.HIGHLIGHT_ELEMENT_SEARCH_DEPTH) {
+    if (current.classList?.contains(CONSTANTS.HIGHLIGHT_CLASS)) {
+      return current;
     }
-    
-    return null;
+    current = current.parentElement;
+    depth++;
+  }
+
+  return null;
 };
 
 /**
@@ -320,26 +353,31 @@ export const findHighlightElement = (element: Element): Element | null => {
  * @param {string} color - ハイライトの色
  * @param {string} id - ハイライトのID
  */
-const addHighlightInfo = (element: Element, text: string, color: string, id: string): void => {
-    const xpath = getXPath(element);
-    if (xpath) {
-        const highlightInfo: HighlightInfo = {
-            id: id,
-            xpath: xpath,
-            text: text,
-            color: color,
-            timestamp: Date.now()
-        };
-        
-        // 既存の同じIDのハイライトを削除
-        highlightData = highlightData.filter(item => item.id !== id);
-        
-        // 新しいハイライト情報を追加
-        highlightData.push(highlightInfo);
-        
-        // データを保存
-        saveHighlightData(highlightData, currentDomain);
-    }
+const addHighlightInfo = (
+  element: Element,
+  text: string,
+  color: string,
+  id: string,
+): void => {
+  const xpath = getXPath(element);
+  if (xpath) {
+    const highlightInfo: HighlightInfo = {
+      id: id,
+      xpath: xpath,
+      text: text,
+      color: color,
+      timestamp: Date.now(),
+    };
+
+    // 既存の同じIDのハイライトを削除
+    highlightData = highlightData.filter((item) => item.id !== id);
+
+    // 新しいハイライト情報を追加
+    highlightData.push(highlightInfo);
+
+    // データを保存
+    saveHighlightData(highlightData, currentDomain);
+  }
 };
 
 /**
@@ -347,61 +385,65 @@ const addHighlightInfo = (element: Element, text: string, color: string, id: str
  * @param {string} id - 削除するハイライトのID
  */
 const removeHighlightInfo = (id: string): void => {
-    const originalLength = highlightData.length;
-    highlightData = highlightData.filter(item => item.id !== id);
-    
-    if (highlightData.length !== originalLength) {
-        saveHighlightData(highlightData, currentDomain);
-        console.log('ハイライト情報を削除しました:', id);
-    }
+  const originalLength = highlightData.length;
+  highlightData = highlightData.filter((item) => item.id !== id);
+
+  if (highlightData.length !== originalLength) {
+    saveHighlightData(highlightData, currentDomain);
+    console.log('ハイライト情報を削除しました:', id);
+  }
 };
 
 /**
  * 保存されたハイライト情報を元にページ上のハイライトを復元する
  */
 export const restoreHighlights = (): void => {
-    highlightData.forEach(highlightInfo => {
-        try {
-            const element = getElementByXPath(highlightInfo.xpath);
-            if (element) {
-                // テキスト内容を確認
-                const textContent = element.textContent || '';
-                const targetText = highlightInfo.text;
-                const startIndex = textContent.indexOf(targetText);
-                
-                if (startIndex !== -1) {
-                    // テキストノードを探してハイライトを適用
-                    const textNodes = getTextNodes(element);
-                    let currentIndex = 0;
-                    
-                    for (let textNode of textNodes) {
-                        const nodeText = textNode.textContent || '';
-                        const nodeEnd = currentIndex + nodeText.length;
-                        
-                        if (startIndex >= currentIndex && startIndex < nodeEnd) {
-                            const nodeStartIndex = startIndex - currentIndex;
-                            const nodeEndIndex = Math.min(
-                                nodeStartIndex + targetText.length,
-                                nodeText.length
-                            );
-                            
-                            // 範囲を作成してハイライトを適用
-                            const range = document.createRange();
-                            range.setStart(textNode, nodeStartIndex);
-                            range.setEnd(textNode, nodeEndIndex);
-                            
-                            applyHighlightToRange(range, highlightInfo.color, highlightInfo.id);
-                            break;
-                        }
-                        
-                        currentIndex = nodeEnd;
-                    }
-                }
+  highlightData.forEach((highlightInfo) => {
+    try {
+      const element = getElementByXPath(highlightInfo.xpath);
+      if (element) {
+        // テキスト内容を確認
+        const textContent = element.textContent || '';
+        const targetText = highlightInfo.text;
+        const startIndex = textContent.indexOf(targetText);
+
+        if (startIndex !== -1) {
+          // テキストノードを探してハイライトを適用
+          const textNodes = getTextNodes(element);
+          let currentIndex = 0;
+
+          for (const textNode of textNodes) {
+            const nodeText = textNode.textContent || '';
+            const nodeEnd = currentIndex + nodeText.length;
+
+            if (startIndex >= currentIndex && startIndex < nodeEnd) {
+              const nodeStartIndex = startIndex - currentIndex;
+              const nodeEndIndex = Math.min(
+                nodeStartIndex + targetText.length,
+                nodeText.length,
+              );
+
+              // 範囲を作成してハイライトを適用
+              const range = document.createRange();
+              range.setStart(textNode, nodeStartIndex);
+              range.setEnd(textNode, nodeEndIndex);
+
+              applyHighlightToRange(
+                range,
+                highlightInfo.color,
+                highlightInfo.id,
+              );
+              break;
             }
-        } catch (error) {
-            console.error('ハイライト復元エラー:', error);
+
+            currentIndex = nodeEnd;
+          }
         }
-    });
+      }
+    } catch (error) {
+      console.error('ハイライト復元エラー:', error);
+    }
+  });
 };
 
 /**
@@ -410,51 +452,57 @@ export const restoreHighlights = (): void => {
  * @param {string} [selectedText] - 選択されたテキスト（フォールバック用）
  * @returns {boolean} ハイライト適用が成功した場合はtrue
  */
-export const handleContextMenuHighlight = (color: string, selectedText: string | null = null): boolean => {
-    const contextSelection = getContextMenuSelection();
-    const now = Date.now();
-    
-    // 保存された選択情報を使用（5秒以内の場合）
-    if (contextSelection.range && 
-        contextSelection.timestamp && 
-        (now - contextSelection.timestamp) < CONSTANTS.TIMEOUTS.CONTEXT_MENU_SELECTION) {
-        
-        console.log('保存された選択情報を使用してハイライト適用:', contextSelection.text);
-        
-        const success = applyHighlightToRange(contextSelection.range, color);
-        
-        // 使用済みの選択情報をクリア
-        clearContextMenuSelection();
-        
-        return success;
+export const handleContextMenuHighlight = (
+  color: string,
+  selectedText: string | null = null,
+): boolean => {
+  const contextSelection = getContextMenuSelection();
+  const now = Date.now();
+
+  // 保存された選択情報を使用（5秒以内の場合）
+  if (
+    contextSelection.range &&
+    contextSelection.timestamp &&
+    now - contextSelection.timestamp < CONSTANTS.TIMEOUTS.CONTEXT_MENU_SELECTION
+  ) {
+    console.log(
+      '保存された選択情報を使用してハイライト適用:',
+      contextSelection.text,
+    );
+
+    const success = applyHighlightToRange(contextSelection.range, color);
+
+    // 使用済みの選択情報をクリア
+    clearContextMenuSelection();
+
+    return success;
+  } else {
+    // フォールバック: テキスト検索方式
+    if (selectedText?.trim()) {
+      return applyHighlightToText(selectedText, color);
     } else {
-        // フォールバック: テキスト検索方式
-        if (selectedText && selectedText.trim()) {
-            return applyHighlightToText(selectedText, color);
-        } else {
-            console.log('ハイライト適用失敗: 選択情報が見つかりません');
-            return false;
-        }
+      console.log('ハイライト適用失敗: 選択情報が見つかりません');
+      return false;
     }
+  }
 };
 
 /**
  * ハイライト要素のダブルクリック処理を設定する
  */
 export const setupHighlightEventListeners = (): void => {
-    // ハイライト要素のダブルクリック処理（削除）
-    document.addEventListener('dblclick', (event) => {
-        const highlightElement = findHighlightElement(event.target as Element);
-        if (highlightElement) {
-            event.preventDefault();
-            event.stopPropagation();
-            
-            // 確認なしで即座に削除
-            const success = removeHighlight(highlightElement);
-            if (success) {
-                console.log('ダブルクリックでハイライトを削除しました');
-            }
-        }
-    });
-};
+  // ハイライト要素のダブルクリック処理（削除）
+  document.addEventListener('dblclick', (event) => {
+    const highlightElement = findHighlightElement(event.target as Element);
+    if (highlightElement) {
+      event.preventDefault();
+      event.stopPropagation();
 
+      // 確認なしで即座に削除
+      const success = removeHighlight(highlightElement);
+      if (success) {
+        console.log('ダブルクリックでハイライトを削除しました');
+      }
+    }
+  });
+};
