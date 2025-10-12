@@ -1,3 +1,5 @@
+import type { DEFAULT_COLORS } from './constants';
+
 /**
  * ハイライトデータの型定義
  */
@@ -11,6 +13,12 @@ export type HighlightData = {
   url: string;
   createdAt: number;
 };
+
+/**
+ * カラーオプションの型定義
+ * DEFAULT_COLORS配列の要素から自動生成
+ */
+export type ColorOption = (typeof DEFAULT_COLORS)[number];
 
 /**
  * ストレージに保存するデータ構造

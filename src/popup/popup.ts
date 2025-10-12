@@ -8,7 +8,7 @@ import {
   DEFAULT_COLORS,
   STORAGE_KEY,
 } from '../shared/constants';
-import type { StorageData } from '../shared/types';
+import type { ColorOption, StorageData } from '../shared/types';
 
 /**
  * 現在選択されている色を取得
@@ -27,7 +27,7 @@ const getSelectedColor = async (): Promise<string> => {
 /**
  * 色を保存
  */
-const saveSelectedColor = async (color: string): Promise<void> => {
+const saveSelectedColor = async (color: ColorOption): Promise<void> => {
   try {
     const result = await chrome.storage.sync.get(STORAGE_KEY);
     const data = (result[STORAGE_KEY] as StorageData) || {
@@ -35,7 +35,7 @@ const saveSelectedColor = async (color: string): Promise<void> => {
       selectedColor: DEFAULT_COLOR,
     };
 
-    data.selectedColor = color;
+    data.selectedColor = color.id;
 
     await chrome.storage.sync.set({ [STORAGE_KEY]: data });
   } catch (error) {
@@ -82,7 +82,7 @@ const initializeUI = async (): Promise<void> => {
       button.classList.add('selected');
 
       // 色を保存
-      await saveSelectedColor(colorOption.value);
+      await saveSelectedColor(colorOption);
     });
 
     colorGrid.appendChild(button);
