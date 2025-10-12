@@ -3,12 +3,11 @@
  */
 
 import { CONSTANTS } from '../shared/constants';
-import { getCurrentColor, loadCurrentColor, loadCustomColors } from './colorManager';
+import { getCurrentColor, loadCurrentColor } from './colorManager';
 import {
     initializeDOMElements,
     setupEventListeners,
     showStatus,
-    updateCustomColorDisplay,
     updateSelectedColorButton
 } from './uiController';
 
@@ -52,17 +51,11 @@ const initializePopup = async (): Promise<void> => {
         // 選択状態を確認（表示はしないが、selectedTextを更新するため）
         await updateSelectionInfo();
         
-        // カスタム色を読み込み
-        await loadCustomColors();
-        
         // 現在の色を読み込み
         await loadCurrentColor();
         
         // イベントリスナーを設定
         setupEventListeners();
-        
-        // カスタム色の表示を更新
-        updateCustomColorDisplay();
         
         // 選択された色ボタンの表示を更新
         const currentColor = getCurrentColor();

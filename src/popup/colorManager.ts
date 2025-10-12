@@ -7,11 +7,9 @@ import { CONSTANTS } from '../shared/constants';
 interface ColorInfo {
     color: string;
     name: string;
-    id?: string;
 }
 
-// カスタム色データ
-let customColors: ColorInfo[] = [];
+// 現在の色データ
 let currentHighlightColor = CONSTANTS.DEFAULT_HIGHLIGHT_COLOR;
 let currentColorName = '黄色';
 
@@ -24,14 +22,6 @@ export const getCurrentColor = (): ColorInfo => {
         color: currentHighlightColor,
         name: currentColorName
     };
-};
-
-/**
- * カスタム色を取得する
- * @returns {Array} カスタム色配列
- */
-export const getCustomColors = (): ColorInfo[] => {
-    return customColors;
 };
 
 /**
@@ -76,100 +66,6 @@ export const loadCurrentColor = async (): Promise<void> => {
         }
     } catch (error) {
         console.error('現在の色読み込みエラー:', error);
-    }
-};
-
-/**
- * ストレージからカスタム色の一覧を読み込む
- * @returns {Promise<void>}
- */
-export const loadCustomColors = async (): Promise<void> => {
-    try {
-        const result = await chrome.storage.sync.get([CONSTANTS.STORAGE_KEYS.CUSTOM_COLORS]);
-        customColors = result[CONSTANTS.STORAGE_KEYS.CUSTOM_COLORS] || [];
-        console.log('カスタム色を読み込みました:', customColors);
-    } catch (error) {
-        console.error('カスタム色読み込みエラー:', error);
-        customColors = [];
-    }
-};
-
-/**
- * 新しいカスタム色を追加する
- * @param {string} color - 追加する色（16進数カラーコード）
- * @param {string} name - 色の名前
- * @returns {Promise<void>}
- */
-export const addCustomColor = async (color: string, name: string): Promise<void> => {
-    try {
-        const newColor: ColorInfo = {
-            color: color,
-            name: name,
-            id: 'custom_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5)
-        };
-        
-        customColors.push(newColor);
-        await saveCustomColors();
-        console.log(`カスタム色「${name}」を追加しました`);
-    } catch (error) {
-        console.error('カスタム色追加エラー:', error);
-        throw error;
-    }
-};
-
-/**
- * 既存のカスタム色を更新する
- * @param {number} index - 更新する色のインデックス
- * @param {string} color - 新しい色（16進数カラーコード）
- * @param {string} name - 新しい色の名前
- * @returns {Promise<void>}
- */
-export const updateCustomColor = async (index: number, color: string, name: string): Promise<void> => {
-    try {
-        if (index >= 0 && index < customColors.length) {
-            customColors[index].color = color;
-            customColors[index].name = name;
-            await saveCustomColors();
-            console.log(`カスタム色「${name}」を更新しました`);
-        }
-    } catch (error) {
-        console.error('カスタム色更新エラー:', error);
-        throw error;
-    }
-};
-
-/**
- * 指定されたインデックスのカスタム色を削除する
- * @param {number} index - 削除する色のインデックス
- * @returns {Promise<void>}
- */
-export const removeCustomColor = async (index: number): Promise<ColorInfo | undefined> => {
-    try {
-        if (index >= 0 && index < customColors.length) {
-            const removedColor = customColors[index];
-            customColors.splice(index, 1);
-            await saveCustomColors();
-            console.log(`カスタム色「${removedColor.name}」を削除しました`);
-            return removedColor;
-        }
-    } catch (error) {
-        console.error('カスタム色削除エラー:', error);
-        throw error;
-    }
-};
-
-/**
- * カスタム色の配列をストレージに保存する
- * @returns {Promise<void>}
- * @throws {Error} 保存に失敗した場合
- */
-const saveCustomColors = async (): Promise<void> => {
-    try {
-        await chrome.storage.sync.set({ [CONSTANTS.STORAGE_KEYS.CUSTOM_COLORS]: customColors });
-        console.log('カスタム色を保存しました:', customColors);
-    } catch (error) {
-        console.error('カスタム色保存エラー:', error);
-        throw error;
     }
 };
 

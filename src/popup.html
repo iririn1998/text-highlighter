@@ -89,42 +89,13 @@
         .color-lime { background-color: #f0fff0; }
         .color-pink { background-color: #ffc0cb; }
 
-        .custom-colors {
-            background: white;
-            border-radius: 8px;
-            padding: 16px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-
-        .custom-title {
-            font-size: 14px;
-            font-weight: 600;
-            color: #2c3e50;
-            margin-bottom: 12px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .add-custom-btn {
-            background: #3498db;
-            color: white;
-            border: none;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 10px;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-
-        .add-custom-btn:hover {
-            background: #2980b9;
-        }
-
-        .custom-color-list {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 8px;
+        .removal-info {
+            font-size: 12px;
+            color: #7f8c8d;
+            text-align: center;
+            padding: 12px 8px 0 8px;
+            margin-top: 8px;
+            border-top: 1px solid #e8e8e8;
         }
 
         .status-message {
@@ -147,15 +118,6 @@
             color: #721c24;
             border: 1px solid #f5c6cb;
         }
-
-        .empty-custom {
-            text-align: center;
-            color: #95a5a6;
-            font-style: italic;
-            font-size: 12px;
-            grid-column: 1 / -1;
-            padding: 20px;
-        }
     </style>
 </head>
 <body>
@@ -165,7 +127,7 @@
 
 
     <div class="color-palette">
-        <div class="palette-title">デフォルト色</div>
+        <div class="palette-title">色選択</div>
         <div class="color-grid">
             <button class="color-button color-red" data-color="#ffcccb" title="赤">赤</button>
             <button class="color-button color-blue" data-color="#add8e6" title="青">青</button>
@@ -176,23 +138,7 @@
             <button class="color-button color-lime" data-color="#f0fff0" title="黄緑">黄緑</button>
             <button class="color-button color-pink" data-color="#ffc0cb" title="桃">桃</button>
         </div>
-    </div>
-
-    <div class="custom-colors">
-        <div class="custom-title">
-            カスタム色
-            <button class="add-custom-btn" id="addCustomBtn">+ 追加</button>
-        </div>
-        <div class="custom-color-list" id="customColorList">
-            <div class="empty-custom">
-                カスタム色はまだ設定されていません
-            </div>
-        </div>
-    </div>
-
-    <!-- ハイライト削除セクション -->
-    <div class="custom-colors" style="margin-top: 16px;">
-        <div style="font-size: 12px; color: #7f8c8d; text-align: center; padding: 8px;">
+        <div class="removal-info">
             💡 削除方法: ハイライトをダブルクリック
         </div>
     </div>
