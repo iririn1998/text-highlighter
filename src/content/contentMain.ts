@@ -4,6 +4,7 @@
 
 import { CONSTANTS } from '../shared/constants';
 import { getCurrentDomain } from '../shared/utils';
+import '../style.css';
 import { checkExtensionContext } from './extensionContext';
 import {
     applyHighlight,
