@@ -17,7 +17,7 @@ async function getSelectedColor(): Promise<string> {
     const data = result[STORAGE_KEY] as StorageData | undefined;
     return data?.selectedColor || DEFAULT_COLOR;
   } catch (error) {
-    console.error('色の取得エラー:', error);
+    console.error(error);
     return DEFAULT_COLOR;
   }
 }
@@ -36,9 +36,8 @@ async function saveSelectedColor(color: string): Promise<void> {
     data.selectedColor = color;
 
     await chrome.storage.sync.set({ [STORAGE_KEY]: data });
-    console.log('色を保存しました:', color);
   } catch (error) {
-    console.error('色の保存エラー:', error);
+    console.error(error);
   }
 }
 
@@ -113,6 +112,5 @@ function showFeedback(message: string): void {
  * 初期化
  */
 document.addEventListener('DOMContentLoaded', () => {
-  console.log('Text Highlighter Popup: 初期化開始');
   initializeUI();
 });

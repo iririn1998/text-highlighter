@@ -11,8 +11,6 @@ chrome.runtime.onInstalled.addListener(() => {
     title: 'ハイライトを追加',
     contexts: ['selection'],
   });
-
-  console.log('Text Highlighter: インストール完了');
 });
 
 // コンテキストメニューがクリックされたときの処理
@@ -36,9 +34,7 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
 });
 
 // コンテンツスクリプトからのメッセージを処理
-chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
-  console.log('バックグラウンドでメッセージ受信:', message);
-
+chrome.runtime.onMessage.addListener((_message, _sender, sendResponse) => {
   // 必要に応じてメッセージ処理を追加
   sendResponse({ success: true });
   return true;
