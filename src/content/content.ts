@@ -5,6 +5,7 @@
 
 import type { HighlightData, StorageData } from '../shared/types';
 import { DEFAULT_COLOR } from '../shared/types';
+import '../style.css';
 
 const STORAGE_KEY = 'text-highlighter-data';
 const HIGHLIGHT_CLASS = 'text-highlight';

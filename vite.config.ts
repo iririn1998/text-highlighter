@@ -12,7 +12,6 @@ const manifest = defineManifest({
     {
       matches: ['<all_urls>'],
       js: ['src/content/content.ts'],
-      css: ['src/style.css'],
     },
   ],
   action: {
