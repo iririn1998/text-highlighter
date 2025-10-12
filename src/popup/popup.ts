@@ -81,31 +81,10 @@ async function initializeUI(): Promise<void> {
 
       // 色を保存
       await saveSelectedColor(colorOption.value);
-
-      // フィードバック表示
-      showFeedback('色を変更しました');
     });
 
     colorGrid.appendChild(button);
   }
-}
-
-/**
- * フィードバックメッセージを表示
- */
-function showFeedback(message: string): void {
-  const feedback = document.getElementById('feedback');
-  if (!feedback) {
-    return;
-  }
-
-  feedback.textContent = message;
-  feedback.style.display = 'block';
-
-  // 2秒後に非表示
-  setTimeout(() => {
-    feedback.style.display = 'none';
-  }, 2000);
 }
 
 /**
