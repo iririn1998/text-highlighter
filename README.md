@@ -6,7 +6,7 @@ Webページ上で選択したテキストの背景色を変更できるGoogle C
 ## 技術スタック
 - **Vite** - 高速なビルドツール
 - **TypeScript** - 型安全な開発
-- **@crxjs/vite-plugin** - Chrome拡張機能用Viteプラグイン（ホットリロード対応）
+- **@crxjs/vite-plugin** - Chrome拡張機能用Viteプラグイン
 
 ## 開発方法
 
@@ -16,7 +16,7 @@ Webページ上で選択したテキストの背景色を変更できるGoogle C
 npm install
 ```
 
-### 開発モード（ホットリロード対応）
+### 実行
 ```bash
 # 開発サーバーを起動
 npm run dev
@@ -30,7 +30,7 @@ npm run dev
 
 コードを変更すると、自動的に拡張機能がリロードされます。
 
-### 本番ビルド
+### ビルド
 ```bash
 # プロダクション用にビルド
 npm run build
@@ -40,7 +40,6 @@ npm run build
 
 ## インストール方法
 
-### 開発版のインストール（ローカルファイルから）
 1. **リポジトリのダウンロード**
    - このリポジトリをクローンまたはダウンロード
    ```bash
@@ -73,24 +72,3 @@ npm run build
 3. **色を設定**
    - 拡張機能のポップアップから4色のプリセットカラーを選択
    - 黄、緑、ピンク、青から選択可能
-
-## プロジェクト構造
-```
-text-highlighter/
-├── src/
-│   ├── background/         # バックグラウンドスクリプト
-│   │   └── background.ts   # コンテキストメニュー、メッセージング
-│   ├── content/            # コンテンツスクリプト
-│   │   └── content.ts      # ハイライト処理、削除、復元
-│   ├── popup/              # ポップアップUI
-│   │   └── popup.ts        # カラー選択UI制御
-│   ├── shared/             # 共通ユーティリティ
-│   │   └── types.ts        # 型定義、定数
-│   ├── popup.html          # ポップアップHTML
-│   └── style.css           # ハイライトスタイル
-├── icons/                  # アイコン画像
-├── vite.config.ts          # Vite設定
-├── tsconfig.json           # TypeScript設定
-└── package.json            # パッケージ設定
-```
-
