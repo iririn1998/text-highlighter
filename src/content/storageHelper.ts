@@ -5,10 +5,26 @@
 import { getStorageKey } from '../shared/utils';
 import { checkExtensionContext, sendMessageSafely } from './extensionContext';
 
+// Window型の拡張
+interface WindowWithExtensionContext extends Window {
+  extensionContextInvalidatedNotified?: boolean;
+}
+
+// グローバルwindowオブジェクトを拡張
+declare let window: WindowWithExtensionContext;
+
+export interface HighlightItem {
+  id: string;
+  xpath: string;
+  text: string;
+  color: string;
+  timestamp: number;
+}
+
 interface HighlightDataStorage {
   domain: string;
   url: string;
-  highlights: any[];
+  highlights: HighlightItem[];
   lastUpdated: number;
 }
 
@@ -20,7 +36,7 @@ interface HighlightDataStorage {
  * @returns {Promise<Array<string>>} 各保存方法の結果の配列
  */
 export const saveHighlightDataReliable = async (
-  data: any,
+  data: HighlightDataStorage,
   key: string,
 ): Promise<string[]> => {
   const saveResults: string[] = [];
@@ -76,8 +92,8 @@ export const saveHighlightDataReliable = async (
       );
 
       // ユーザーに通知（1回だけ）
-      if (!(window as any).extensionContextInvalidatedNotified) {
-        (window as any).extensionContextInvalidatedNotified = true;
+      if (!window.extensionContextInvalidatedNotified) {
+        window.extensionContextInvalidatedNotified = true;
         setTimeout(() => {
           if (
             confirm(
@@ -124,8 +140,8 @@ export const saveHighlightDataReliable = async (
  */
 export const loadHighlightDataReliable = async (
   key: string,
-): Promise<any | null> => {
-  let loadedData: any = null;
+): Promise<HighlightDataStorage | null> => {
+  let loadedData: HighlightDataStorage | null = null;
   const loadResults: string[] = [];
 
   // 方法1: localStorage（最優先 - コンテキスト無効化の影響を受けない）
@@ -224,7 +240,7 @@ export const loadHighlightDataReliable = async (
  * @returns {Promise<void>}
  */
 export const saveHighlightData = async (
-  highlightData: any[],
+  highlightData: HighlightItem[],
   currentDomain: string,
 ): Promise<void> => {
   try {
@@ -293,7 +309,7 @@ export const saveHighlightData = async (
  */
 export const loadHighlightData = async (
   currentDomain: string,
-): Promise<any[]> => {
+): Promise<HighlightItem[]> => {
   try {
     const key = getStorageKey(currentDomain);
     console.log('📖 ハイライトデータを読み込み中...', key);

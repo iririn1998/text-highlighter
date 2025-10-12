@@ -2,6 +2,8 @@
  * 拡張機能コンテキスト管理モジュール
  */
 
+import type { Message, MessageResponse } from '../shared/types';
+
 // 拡張機能の状態チェック
 let extensionValid = true;
 
@@ -82,9 +84,9 @@ export const checkServiceWorkerStatus = async (): Promise<boolean> => {
  * @returns {Promise<Object|null>} Service Workerからの応答、失敗時はnull
  */
 export const sendMessageSafely = async (
-  message: any,
+  message: Message,
   maxRetries: number = 3,
-): Promise<any | null> => {
+): Promise<MessageResponse | null> => {
   // 拡張機能のコンテキストが有効かチェック
   if (!checkExtensionContext()) {
     console.log(

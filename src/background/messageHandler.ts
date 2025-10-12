@@ -3,18 +3,15 @@
  */
 
 import { CONSTANTS } from '../shared/constants';
+import type {
+  LoadFromStorageMessage,
+  LoadFromStorageResponse,
+  Message,
+  MessageResponse,
+  SaveToStorageMessage,
+  SaveToStorageResponse,
+} from '../shared/types';
 import { getServiceWorkerStatus } from './serviceWorkerManager';
-
-interface SaveToStorageRequest {
-  action: string;
-  key: string;
-  data: any;
-}
-
-interface LoadFromStorageRequest {
-  action: string;
-  key: string;
-}
 
 /**
  * ストレージへのデータ保存を処理する
@@ -23,8 +20,8 @@ interface LoadFromStorageRequest {
  * @returns {Promise<void>}
  */
 const handleSaveToStorage = async (
-  request: SaveToStorageRequest,
-  sendResponse: (response: any) => void,
+  request: SaveToStorageMessage,
+  sendResponse: (response: SaveToStorageResponse) => void,
 ): Promise<void> => {
   const startTime = Date.now();
 
@@ -78,8 +75,8 @@ const handleSaveToStorage = async (
  * @returns {Promise<void>}
  */
 const handleLoadFromStorage = async (
-  request: LoadFromStorageRequest,
-  sendResponse: (response: any) => void,
+  request: LoadFromStorageMessage,
+  sendResponse: (response: LoadFromStorageResponse) => void,
 ): Promise<void> => {
   const startTime = Date.now();
 
@@ -130,74 +127,85 @@ const handleLoadFromStorage = async (
  * メッセージハンドラーを設定する
  */
 export const setupMessageHandler = (): void => {
-  chrome.runtime.onMessage.addListener((request: any, sender, sendResponse) => {
-    console.log('Background: メッセージを受信しました:', {
-      action: request.action,
-      sender: sender.tab?.url || 'popup',
-      timestamp: new Date().toISOString(),
-    });
+  chrome.runtime.onMessage.addListener(
+    (request: Message, sender, sendResponse) => {
+      console.log('Background: メッセージを受信しました:', {
+        action: request.action,
+        sender: sender.tab?.url || 'popup',
+        timestamp: new Date().toISOString(),
+      });
 
-    // 非同期処理のためのフラグ
-    let isAsync = false;
+      // 非同期処理のためのフラグ
+      let isAsync = false;
 
-    try {
-      // Service Worker状態確認のためのpingメッセージ
-      if (request.action === CONSTANTS.MESSAGE_ACTIONS.PING) {
-        console.log('Background: Pingメッセージを受信しました');
-        sendResponse({
-          success: true,
-          message: 'Service Worker is active',
-          timestamp: Date.now(),
-          workerStatus: getServiceWorkerStatus(),
-        });
-        return false; // 同期レスポンス
+      try {
+        // Service Worker状態確認のためのpingメッセージ
+        if (request.action === CONSTANTS.MESSAGE_ACTIONS.PING) {
+          console.log('Background: Pingメッセージを受信しました');
+          sendResponse({
+            success: true,
+            message: 'Service Worker is active',
+            timestamp: Date.now(),
+            workerStatus: getServiceWorkerStatus(),
+          } as MessageResponse);
+          return false; // 同期レスポンス
+        }
+
+        // ポップアップとコンテンツスクリプト間の通信を中継
+        else if (
+          request.action === CONSTANTS.MESSAGE_ACTIONS.TEXT_SELECTED ||
+          request.action === CONSTANTS.MESSAGE_ACTIONS.TEXT_DESELECTED
+        ) {
+          console.log('Background: テキスト選択状態の変更を受信しました');
+          sendResponse({
+            success: true,
+            message: 'Selection state received',
+          } as MessageResponse);
+          return false; // 同期レスポンス
+        }
+
+        // ストレージアクセス関連のメッセージ処理
+        else if (request.action === CONSTANTS.MESSAGE_ACTIONS.SAVE_TO_STORAGE) {
+          isAsync = true;
+          handleSaveToStorage(
+            request as SaveToStorageMessage,
+            sendResponse as (response: SaveToStorageResponse) => void,
+          );
+          return true; // 非同期レスポンスを示す
+        } else if (
+          request.action === CONSTANTS.MESSAGE_ACTIONS.LOAD_FROM_STORAGE
+        ) {
+          isAsync = true;
+          handleLoadFromStorage(
+            request as LoadFromStorageMessage,
+            sendResponse as (response: LoadFromStorageResponse) => void,
+          );
+          return true; // 非同期レスポンスを示す
+        }
+
+        // その他のメッセージについても応答を返す
+        else {
+          console.log('Background: 不明なアクション:', request.action);
+          sendResponse({
+            success: true,
+            message: 'Unknown action received',
+            action: request.action,
+          } as MessageResponse);
+          return false; // 同期レスポンス
+        }
+      } catch (error) {
+        console.error('Background: メッセージ処理エラー:', error);
+
+        // エラーが発生した場合でも応答を返す
+        if (!isAsync) {
+          sendResponse({
+            success: false,
+            error: (error as Error).message,
+            action: request.action,
+          } as MessageResponse);
+        }
+        return false;
       }
-
-      // ポップアップとコンテンツスクリプト間の通信を中継
-      else if (
-        request.action === CONSTANTS.MESSAGE_ACTIONS.TEXT_SELECTED ||
-        request.action === CONSTANTS.MESSAGE_ACTIONS.TEXT_DESELECTED
-      ) {
-        console.log('Background: テキスト選択状態の変更を受信しました');
-        sendResponse({ success: true, message: 'Selection state received' });
-        return false; // 同期レスポンス
-      }
-
-      // ストレージアクセス関連のメッセージ処理
-      else if (request.action === CONSTANTS.MESSAGE_ACTIONS.SAVE_TO_STORAGE) {
-        isAsync = true;
-        handleSaveToStorage(request, sendResponse);
-        return true; // 非同期レスポンスを示す
-      } else if (
-        request.action === CONSTANTS.MESSAGE_ACTIONS.LOAD_FROM_STORAGE
-      ) {
-        isAsync = true;
-        handleLoadFromStorage(request, sendResponse);
-        return true; // 非同期レスポンスを示す
-      }
-
-      // その他のメッセージについても応答を返す
-      else {
-        console.log('Background: 不明なアクション:', request.action);
-        sendResponse({
-          success: true,
-          message: 'Unknown action received',
-          action: request.action,
-        });
-        return false; // 同期レスポンス
-      }
-    } catch (error) {
-      console.error('Background: メッセージ処理エラー:', error);
-
-      // エラーが発生した場合でも応答を返す
-      if (!isAsync) {
-        sendResponse({
-          success: false,
-          error: (error as Error).message,
-          action: request.action,
-        });
-      }
-      return false;
-    }
-  });
+    },
+  );
 };

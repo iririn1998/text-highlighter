@@ -78,11 +78,12 @@ export const getTextNodes = (element: Element): Text[] => {
   const textNodes: Text[] = [];
   const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT, null);
 
-  let node: Node | null;
-  while ((node = walker.nextNode())) {
+  let node: Node | null = walker.nextNode();
+  while (node) {
     if (node.textContent?.trim()) {
       textNodes.push(node as Text);
     }
+    node = walker.nextNode();
   }
 
   return textNodes;

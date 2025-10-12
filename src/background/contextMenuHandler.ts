@@ -49,9 +49,10 @@ export const setupContextMenuClickHandler = (): void => {
     console.log('右クリックメニューがクリックされました:', info.menuItemId);
 
     if (info.menuItemId === 'addHighlight' && tab?.id) {
+      const tabId = tab.id;
       // 現在選択中の色を取得してコンテンツスクリプトにハイライト追加を指示
       getCurrentHighlightColorFromStorage().then((color) => {
-        chrome.tabs.sendMessage(tab.id!, {
+        chrome.tabs.sendMessage(tabId, {
           action: CONSTANTS.MESSAGE_ACTIONS.ADD_HIGHLIGHT_FROM_CONTEXT,
           selectedText: info.selectionText,
           color: color,

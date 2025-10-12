@@ -120,8 +120,8 @@ export const findTextInPage = (searchText: string): Range | null => {
       null,
     );
 
-    let node: Node | null;
-    while ((node = walker.nextNode())) {
+    let node: Node | null = walker.nextNode();
+    while (node) {
       const nodeText = node.textContent;
       if (nodeText) {
         const index = nodeText.indexOf(searchText);
@@ -133,6 +133,7 @@ export const findTextInPage = (searchText: string): Range | null => {
           return range;
         }
       }
+      node = walker.nextNode();
     }
 
     return null;
@@ -164,8 +165,8 @@ export const getTextNodesInRange = (range: Range): TextNodeInfo[] => {
     },
   );
 
-  let node: Node | null;
-  while ((node = walker.nextNode())) {
+  let node: Node | null = walker.nextNode();
+  while (node) {
     const textNode = node as Text;
     // ノード内での開始・終了位置を計算
     let startOffset = 0;
@@ -209,6 +210,7 @@ export const getTextNodesInRange = (range: Range): TextNodeInfo[] => {
         endOffset: endOffset,
       });
     }
+    node = walker.nextNode();
   }
 
   return textNodes;
