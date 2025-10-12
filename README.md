@@ -70,37 +70,27 @@ npm run build
 2. **ハイライトを削除**
    - ハイライト箇所をダブルクリック
 
-3. **カスタム色を設定**
-   - 拡張機能のポップアップから設定画面を開く
-   - カラーピッカーで任意の色を作成・命名
+3. **色を設定**
+   - 拡張機能のポップアップから4色のプリセットカラーを選択
+   - 黄、緑、ピンク、青から選択可能
 
 ## プロジェクト構造
 ```
 text-highlighter/
 ├── src/
 │   ├── background/         # バックグラウンドスクリプト
-│   │   ├── backgroundMain.ts
-│   │   ├── contextMenuHandler.ts
-│   │   ├── messageHandler.ts
-│   │   └── serviceWorkerManager.ts
-│   ├── content/           # コンテンツスクリプト
-│   │   ├── contentMain.ts
-│   │   ├── extensionContext.ts
-│   │   ├── highlightManager.ts
-│   │   ├── storageHelper.ts
-│   │   └── textSelection.ts
-│   ├── popup/             # ポップアップUI
-│   │   ├── popupMain.ts
-│   │   ├── colorManager.ts
-│   │   └── uiController.ts
-│   ├── shared/            # 共通ユーティリティ
-│   │   ├── constants.ts
-│   │   └── utils.ts
-│   ├── popup.html         # ポップアップHTML
-│   └── style.css          # スタイルシート
-├── icons/                 # アイコン画像
-├── vite.config.ts         # Vite設定
-├── tsconfig.json          # TypeScript設定
-└── package.json           # パッケージ設定
+│   │   └── background.ts   # コンテキストメニュー、メッセージング
+│   ├── content/            # コンテンツスクリプト
+│   │   └── content.ts      # ハイライト処理、削除、復元
+│   ├── popup/              # ポップアップUI
+│   │   └── popup.ts        # カラー選択UI制御
+│   ├── shared/             # 共通ユーティリティ
+│   │   └── types.ts        # 型定義、定数
+│   ├── popup.html          # ポップアップHTML
+│   └── style.css           # ハイライトスタイル
+├── icons/                  # アイコン画像
+├── vite.config.ts          # Vite設定
+├── tsconfig.json           # TypeScript設定
+└── package.json            # パッケージ設定
 ```
 

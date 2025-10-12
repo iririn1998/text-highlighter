@@ -7,11 +7,12 @@ const manifest = defineManifest({
   name: 'Text Highlighter',
   version: '1.0.0',
   description: 'ウェブページ上のテキストをハイライトする拡張機能',
-  permissions: ['activeTab', 'storage', 'contextMenus', 'idle'],
+  permissions: ['activeTab', 'storage', 'contextMenus'],
   content_scripts: [
     {
       matches: ['<all_urls>'],
-      js: ['src/content/contentMain.ts'],
+      js: ['src/content/content.ts'],
+      css: ['src/style.css'],
     },
   ],
   action: {
@@ -31,7 +32,7 @@ const manifest = defineManifest({
     '128': 'icons/icon128.png',
   },
   background: {
-    service_worker: 'src/background/backgroundMain.ts',
+    service_worker: 'src/background/background.ts',
     type: 'module',
   },
 });

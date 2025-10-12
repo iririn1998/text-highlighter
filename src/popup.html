@@ -5,146 +5,192 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Text Highlighter</title>
     <style>
-        body {
-            width: 320px;
-            padding: 16px;
+        * {
             margin: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #f8f9fa;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            width: 300px;
+            padding: 24px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+            background: #ffffff;
+            color: #333;
         }
 
         .header {
-            text-align: center;
-            margin-bottom: 16px;
+            margin-bottom: 24px;
         }
 
         .header h1 {
-            margin: 0;
-            color: #2c3e50;
-            font-size: 18px;
+            font-size: 20px;
             font-weight: 600;
+            color: #1a1a1a;
+            letter-spacing: -0.5px;
         }
 
-
-
-        .color-palette {
-            background: white;
-            border-radius: 8px;
-            padding: 16px;
-            margin-bottom: 16px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        .header p {
+            font-size: 13px;
+            color: #666;
+            margin-top: 6px;
+            line-height: 1.5;
         }
 
-        .palette-title {
-            font-size: 14px;
+        .section {
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            font-size: 12px;
             font-weight: 600;
-            color: #2c3e50;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
             margin-bottom: 12px;
         }
 
         .color-grid {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 8px;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
         }
 
         .color-button {
-            width: 60px;
-            height: 40px;
-            border: 2px solid #ddd;
-            border-radius: 6px;
+            height: 60px;
+            border: 2px solid #e5e5e5;
+            border-radius: 8px;
+            background: none;
             cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 10px;
-            font-weight: 600;
-            color: #2c3e50;
+            font-size: 14px;
+            font-weight: 500;
+            color: #333;
             transition: all 0.2s ease;
             position: relative;
+            overflow: hidden;
+        }
+
+        .color-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            opacity: 0.3;
+            z-index: -1;
         }
 
         .color-button:hover {
-            transform: scale(1.05);
-            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            border-color: #999;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
         }
 
         .color-button:active {
-            transform: scale(0.98);
+            transform: translateY(0);
         }
 
         .color-button.selected {
-            border: 3px solid #27ae60;
-            box-shadow: 0 0 0 2px rgba(39, 174, 96, 0.2);
+            border-color: #2563eb;
+            border-width: 3px;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
         }
 
-
-        /* デフォルト色 */
-        .color-red { background-color: #ffcccb; }
-        .color-blue { background-color: #add8e6; }
-        .color-yellow { background-color: #ffff00; }
-        .color-green { background-color: #90ee90; }
-        .color-cyan { background-color: #e0ffff; }
-        .color-purple { background-color: #dda0dd; }
-        .color-lime { background-color: #f0fff0; }
-        .color-pink { background-color: #ffc0cb; }
-
-        .removal-info {
-            font-size: 12px;
-            color: #7f8c8d;
-            text-align: center;
-            padding: 12px 8px 0 8px;
-            margin-top: 8px;
-            border-top: 1px solid #e8e8e8;
+        .color-button.selected::after {
+            content: '✓';
+            position: absolute;
+            top: 6px;
+            right: 8px;
+            font-size: 16px;
+            color: #2563eb;
+            font-weight: bold;
         }
 
-        .status-message {
-            text-align: center;
+        /* 色の背景 */
+        .color-button[data-color="#fff59d"]::before {
+            background-color: #fff59d;
+        }
+
+        .color-button[data-color="#a5d6a7"]::before {
+            background-color: #a5d6a7;
+        }
+
+        .color-button[data-color="#f8bbd0"]::before {
+            background-color: #f8bbd0;
+        }
+
+        .color-button[data-color="#90caf9"]::before {
+            background-color: #90caf9;
+        }
+
+        .instructions {
+            margin-top: 24px;
+            padding: 16px;
+            background: #f8f9fa;
+            border-radius: 8px;
             font-size: 12px;
-            padding: 8px;
-            border-radius: 4px;
-            margin-top: 8px;
+            line-height: 1.6;
+            color: #666;
+        }
+
+        .instructions h3 {
+            font-size: 13px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .instructions ol {
+            padding-left: 18px;
+            margin: 0;
+        }
+
+        .instructions li {
+            margin-bottom: 6px;
+        }
+
+        .instructions li:last-child {
+            margin-bottom: 0;
+        }
+
+        #feedback {
             display: none;
-        }
-
-        .status-success {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-
-        .status-error {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
+            margin-top: 12px;
+            padding: 10px;
+            background: #e7f5e9;
+            color: #1e7e34;
+            border-radius: 6px;
+            font-size: 12px;
+            text-align: center;
+            font-weight: 500;
         }
     </style>
 </head>
 <body>
     <div class="header">
-        <h1>📝 Text Highlighter</h1>
+        <h1>Text Highlighter</h1>
+        <p>テキストをマーカーでハイライト</p>
     </div>
 
-
-    <div class="color-palette">
-        <div class="palette-title">色選択</div>
-        <div class="color-grid">
-            <button class="color-button color-red" data-color="#ffcccb" title="赤">赤</button>
-            <button class="color-button color-blue" data-color="#add8e6" title="青">青</button>
-            <button class="color-button color-yellow" data-color="#ffff00" title="黄">黄</button>
-            <button class="color-button color-green" data-color="#90ee90" title="緑">緑</button>
-            <button class="color-button color-cyan" data-color="#e0ffff" title="水色">水色</button>
-            <button class="color-button color-purple" data-color="#dda0dd" title="紫">紫</button>
-            <button class="color-button color-lime" data-color="#f0fff0" title="黄緑">黄緑</button>
-            <button class="color-button color-pink" data-color="#ffc0cb" title="桃">桃</button>
-        </div>
-        <div class="removal-info">
-            💡 削除方法: ハイライトをダブルクリック
+    <div class="section">
+        <div class="section-title">カラー選択</div>
+        <div class="color-grid" id="colorGrid">
+            <!-- JavaScriptで動的に生成されます -->
         </div>
     </div>
 
-    <div class="status-message" id="statusMessage"></div>
+    <div id="feedback"></div>
 
-    <script type="module" src="./popup/popupMain.ts"></script>
+    <div class="instructions">
+        <h3>使い方</h3>
+        <ol>
+            <li>テキストを選択して右クリック</li>
+            <li>「ハイライトを追加」をクリック</li>
+            <li>削除はダブルクリック</li>
+        </ol>
+    </div>
+
+    <script type="module" src="./popup/popup.ts"></script>
 </body>
 </html>

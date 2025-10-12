@@ -1,98 +1,46 @@
 /**
- * 共通型定義
+ * ハイライトデータの型定義
  */
-
-// メッセージの基本構造
-export interface BaseMessage {
-  action: string;
-  success?: boolean;
-  error?: string;
-  timestamp?: number;
-}
-
-// Pingメッセージ
-export interface PingMessage extends BaseMessage {
-  action: 'ping';
-}
-
-// Pingレスポンス
-export interface PingResponse extends BaseMessage {
-  success: true;
-  message: string;
-  timestamp: number;
-  workerStatus: unknown;
-}
-
-// テキスト選択メッセージ
-export interface TextSelectedMessage extends BaseMessage {
-  action: 'textSelected';
+export interface HighlightData {
+  id: string;
   text: string;
+  color: string;
+  xpath: string;
+  offset: number;
   length: number;
+  url: string;
+  createdAt: number;
 }
 
-// テキスト選択解除メッセージ
-export interface TextDeselectedMessage extends BaseMessage {
-  action: 'textDeselected';
+/**
+ * ストレージに保存するデータ構造
+ */
+export interface StorageData {
+  highlights: HighlightData[];
+  selectedColor: string;
 }
 
-// ハイライト適用メッセージ
-export interface ApplyHighlightMessage extends BaseMessage {
-  action: 'applyHighlight';
-  color: string;
+/**
+ * メッセージの型定義
+ */
+export type MessageType =
+  | 'ADD_HIGHLIGHT'
+  | 'REMOVE_HIGHLIGHT'
+  | 'GET_HIGHLIGHTS';
+
+export interface Message {
+  type: MessageType;
+  data?: HighlightData | { id: string } | { url: string };
 }
 
-// コンテキストメニューからのハイライト追加メッセージ
-export interface AddHighlightFromContextMessage extends BaseMessage {
-  action: 'addHighlightFromContext';
-  selectedText?: string;
-  color: string;
-}
+/**
+ * デフォルトカラー設定
+ */
+export const DEFAULT_COLORS = [
+  { name: '黄', value: '#fff59d', class: 'highlight-yellow' },
+  { name: '緑', value: '#a5d6a7', class: 'highlight-green' },
+  { name: 'ピンク', value: '#f8bbd0', class: 'highlight-pink' },
+  { name: '青', value: '#90caf9', class: 'highlight-blue' },
+] as const;
 
-// ストレージ保存メッセージ
-export interface SaveToStorageMessage extends BaseMessage {
-  action: 'saveToStorage';
-  key: string;
-  data: unknown;
-}
-
-// ストレージ保存レスポンス
-export interface SaveToStorageResponse extends BaseMessage {
-  action: 'saveToStorage';
-  success: boolean;
-  timestamp: number;
-  duration: number;
-  error?: string;
-}
-
-// ストレージ読み込みメッセージ
-export interface LoadFromStorageMessage extends BaseMessage {
-  action: 'loadFromStorage';
-  key: string;
-}
-
-// ストレージ読み込みレスポンス
-export interface LoadFromStorageResponse extends BaseMessage {
-  action: 'loadFromStorage';
-  success: boolean;
-  data?: unknown;
-  timestamp: number;
-  duration: number;
-  error?: string;
-}
-
-// 任意のメッセージ型 (Union型)
-export type Message =
-  | PingMessage
-  | TextSelectedMessage
-  | TextDeselectedMessage
-  | ApplyHighlightMessage
-  | AddHighlightFromContextMessage
-  | SaveToStorageMessage
-  | LoadFromStorageMessage;
-
-// 任意のレスポンス型 (Union型)
-export type MessageResponse =
-  | PingResponse
-  | SaveToStorageResponse
-  | LoadFromStorageResponse
-  | BaseMessage;
+export const DEFAULT_COLOR = DEFAULT_COLORS[0].value;
