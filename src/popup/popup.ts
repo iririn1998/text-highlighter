@@ -67,7 +67,7 @@ const initializeUI = async (): Promise<void> => {
     button.textContent = colorOption.name;
 
     // 現在選択されている色にはselectedクラスを追加
-    if (colorOption.value === currentColor) {
+    if (colorOption.id === currentColor) {
       button.classList.add('selected');
     }
 
