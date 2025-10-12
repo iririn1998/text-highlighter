@@ -18,6 +18,18 @@ console.log('ポップアップスクリプトが読み込まれました');
 let currentTab: chrome.tabs.Tab | null = null;
 
 /**
+ * 現在のタブがコンテンツスクリプトに対応しているかチェックする
+ * @returns {boolean}
+ */
+const isContentScriptAvailable = (): boolean => {
+    if (!currentTab?.url) return false;
+    
+    // コンテンツスクリプトが動作しないページをフィルタリング
+    const invalidProtocols = ['chrome://', 'chrome-extension://', 'about:', 'edge://', 'devtools://'];
+    return !invalidProtocols.some(protocol => currentTab.url!.startsWith(protocol));
+};
+
+/**
  * 現在選択されているテキストの情報をコンテンツスクリプトから取得して更新する
  * @returns {Promise<void>}
  */
@@ -25,12 +37,19 @@ const updateSelectionInfo = async (): Promise<void> => {
     try {
         if (!currentTab?.id) return;
         
+        // コンテンツスクリプトが利用可能かチェック
+        if (!isContentScriptAvailable()) {
+            console.log('このページではコンテンツスクリプトが利用できません');
+            return;
+        }
+        
         // コンテンツスクリプトから選択情報を取得
         await chrome.tabs.sendMessage(currentTab.id, {
             action: CONSTANTS.MESSAGE_ACTIONS.GET_SELECTED_TEXT
         });
     } catch (error) {
-        console.error('選択情報取得エラー:', error);
+        // コンテンツスクリプトが読み込まれていない場合のエラーは無視
+        console.log('コンテンツスクリプトへの接続に失敗しました（ページがまだ準備できていない可能性があります）');
     }
 };
 
