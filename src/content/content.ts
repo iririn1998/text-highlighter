@@ -1,4 +1,8 @@
-import { DEFAULT_COLORS, STORAGE_KEY } from '../shared/constants';
+import {
+  DEFAULT_COLOR,
+  DEFAULT_COLORS,
+  STORAGE_KEY,
+} from '../shared/constants';
 import type { ColorOption } from '../shared/types';
 
 /**
@@ -6,7 +10,7 @@ import type { ColorOption } from '../shared/types';
  */
 const getColor = async () => {
   const result = await chrome.storage.sync.get(STORAGE_KEY);
-  return result[STORAGE_KEY]?.selectedColor;
+  return result[STORAGE_KEY]?.selectedColor || DEFAULT_COLOR;
 };
 
 /**
@@ -87,9 +91,8 @@ const applyColor = async (id: ColorOption['id']) => {
 
       try {
         nodeRange.surroundContents(span);
-      } catch (e) {
-        // エラーが発生した場合はスキップ
-        console.error('Failed to apply highlight:', e);
+      } catch (error) {
+        console.error(error);
       }
     });
   }
