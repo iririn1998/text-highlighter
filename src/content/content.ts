@@ -124,6 +124,48 @@ const applyColor = async (id: ColorOption['id']) => {
   selection.removeAllRanges();
 };
 
+/**
+ * グループ全体のハイライトを削除する
+ */
+const removeHighlightGroup = (groupId: string) => {
+  // 同じグループIDを持つ全ての要素を取得
+  const highlightElements = document.querySelectorAll(
+    `span[data-highlight-group="${groupId}"]`,
+  );
+
+  highlightElements.forEach((element) => {
+    // spanの内容を親要素に戻す
+    const parent = element.parentNode;
+    if (parent) {
+      // テキストコンテンツを取得
+      const textContent = element.textContent || '';
+      const textNode = document.createTextNode(textContent);
+      // spanを置換
+      parent.replaceChild(textNode, element);
+      // 隣接するテキストノードを正規化
+      parent.normalize();
+    }
+  });
+};
+
+/**
+ * ダブルクリックイベントのハンドラー
+ */
+const handleDoubleClick = (event: MouseEvent) => {
+  const target = event.target as HTMLElement;
+
+  // ハイライト要素がクリックされたか確認
+  if (target.tagName === 'SPAN' && target.dataset.highlightGroup) {
+    const groupId = target.dataset.highlightGroup;
+    removeHighlightGroup(groupId);
+    // イベントの伝播を止める
+    event.stopPropagation();
+  }
+};
+
+// ダブルクリックイベントリスナーを追加
+document.addEventListener('dblclick', handleDoubleClick);
+
 // メッセージリスナー
 chrome.runtime.onMessage.addListener(async (message) => {
   if (message.type === 'ADD_HIGHLIGHT') {
