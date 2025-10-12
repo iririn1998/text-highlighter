@@ -217,8 +217,8 @@ export const loadHighlightDataReliable = async (
         1,
       ); // リトライ回数を1回に制限
 
-      if (response?.success && response.data) {
-        loadedData = response.data;
+      if (response?.success && 'data' in response && response.data) {
+        loadedData = response.data as HighlightDataStorage;
         loadResults.push('Service Worker: 成功');
         console.log('✅ Service Worker読み込み成功');
       } else {

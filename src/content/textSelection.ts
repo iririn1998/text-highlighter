@@ -91,7 +91,7 @@ export const handleTextSelection = (): void => {
 
     // 選択情報をストレージに保存（ポップアップで使用）
     sendMessageSafely({
-      action: CONSTANTS.MESSAGE_ACTIONS.TEXT_SELECTED,
+      action: CONSTANTS.MESSAGE_ACTIONS.TEXT_SELECTED as 'textSelected',
       text: selectedText,
       length: selectedText.length,
     });
@@ -101,7 +101,7 @@ export const handleTextSelection = (): void => {
 
     // 選択解除をポップアップに通知
     sendMessageSafely({
-      action: CONSTANTS.MESSAGE_ACTIONS.TEXT_DESELECTED,
+      action: CONSTANTS.MESSAGE_ACTIONS.TEXT_DESELECTED as 'textDeselected',
     });
   }
 };

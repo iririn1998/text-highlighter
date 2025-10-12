@@ -57,6 +57,7 @@ export interface SaveToStorageMessage extends BaseMessage {
 
 // ストレージ保存レスポンス
 export interface SaveToStorageResponse extends BaseMessage {
+  action: 'saveToStorage';
   success: boolean;
   timestamp: number;
   duration: number;
@@ -71,6 +72,7 @@ export interface LoadFromStorageMessage extends BaseMessage {
 
 // ストレージ読み込みレスポンス
 export interface LoadFromStorageResponse extends BaseMessage {
+  action: 'loadFromStorage';
   success: boolean;
   data?: unknown;
   timestamp: number;

@@ -33,7 +33,7 @@ const isContentScriptAvailable = (): boolean => {
     'devtools://',
   ];
   return !invalidProtocols.some((protocol) =>
-    currentTab.url?.startsWith(protocol),
+    currentTab?.url?.startsWith(protocol),
   );
 };
 

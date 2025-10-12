@@ -47,6 +47,7 @@ const handleSaveToStorage = async (
     });
 
     sendResponse({
+      action: 'saveToStorage',
       success: true,
       timestamp: Date.now(),
       duration: duration,
@@ -60,6 +61,7 @@ const handleSaveToStorage = async (
     });
 
     sendResponse({
+      action: 'saveToStorage',
       success: false,
       error: (error as Error).message,
       timestamp: Date.now(),
@@ -101,6 +103,7 @@ const handleLoadFromStorage = async (
     });
 
     sendResponse({
+      action: 'loadFromStorage',
       success: true,
       data: result[request.key],
       timestamp: Date.now(),
@@ -115,6 +118,7 @@ const handleLoadFromStorage = async (
     });
 
     sendResponse({
+      action: 'loadFromStorage',
       success: false,
       error: (error as Error).message,
       timestamp: Date.now(),

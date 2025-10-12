@@ -1,3 +1,4 @@
+/// <reference types="vite/client" />
 import { crx, defineManifest } from '@crxjs/vite-plugin';
 import { defineConfig } from 'vite';
 
