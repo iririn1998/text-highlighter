@@ -47,6 +47,13 @@ const getTextNodesInRange = (range: Range): Node[] => {
 };
 
 /**
+ * ユニークなグループIDを生成する（UUID v4を使用）
+ */
+const generateGroupId = () => {
+  return `highlight-group-${crypto.randomUUID()}`;
+};
+
+/**
  * 選択箇所に色を付ける
  */
 const applyColor = async (id: ColorOption['id']) => {
@@ -60,11 +67,15 @@ const applyColor = async (id: ColorOption['id']) => {
   const range = selection.getRangeAt(0);
   if (range.collapsed) return; // 選択範囲が空の場合は何もしない
 
+  // グループIDを生成
+  const groupId = generateGroupId();
+
   try {
     // 単一要素内の選択の場合はsurroundContentsを使用
     const span = document.createElement('span');
     span.style.backgroundColor = color.value;
     span.className = `${color.class}`;
+    span.dataset.highlightGroup = groupId;
     range.surroundContents(span);
 
     // span内が空の場合は削除
@@ -75,6 +86,7 @@ const applyColor = async (id: ColorOption['id']) => {
     // 複数の要素にまたがる場合は、各テキストノードを個別に処理
     const textNodes = getTextNodesInRange(range);
 
+    // 同じグループIDを持つspanを作成
     textNodes.forEach((node) => {
       const nodeRange = document.createRange();
       nodeRange.selectNodeContents(node);
@@ -89,10 +101,11 @@ const applyColor = async (id: ColorOption['id']) => {
         nodeRange.setEnd(node, range.endOffset);
       }
 
-      // spanで囲む
+      // spanで囲む（同じgroupIdを設定）
       const span = document.createElement('span');
       span.style.backgroundColor = color.value;
       span.className = `${color.class}`;
+      span.dataset.highlightGroup = groupId;
 
       try {
         nodeRange.surroundContents(span);
