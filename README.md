@@ -1,74 +1,19 @@
-# Text Highlighter - Google拡張機能
+# Text Highlighter
 
-## 概要
-Webページ上で選択したテキストの背景色を変更できるGoogle Chrome拡張機能です。
+<p align="center">
+  <img src="icons/icon128.png" alt="Text Highlighter" width="128" height="128">
+</p>
 
-## 技術スタック
-- **Vite** - 高速なビルドツール
-- **TypeScript** - 型安全な開発
-- **@crxjs/vite-plugin** - Chrome拡張機能用Viteプラグイン
+<p align="center">
+  A Chrome extension to highlight text on web pages.<br>
+  Webページ上のテキストをハイライトするChrome拡張機能。
+</p>
 
-## 開発方法
+---
 
-### 初回セットアップ
-```bash
-# 依存パッケージをインストール
-npm install
-```
+## 📖 Documentation / ドキュメント
 
-### 実行
-```bash
-# 開発サーバーを起動
-npm run dev
-```
-
-開発サーバーが起動したら：
-1. Chromeで `chrome://extensions/` を開く
-2. 「開発者モード」をONにする
-3. 「パッケージ化されていない拡張機能を読み込む」をクリック
-4. プロジェクトの`dist`フォルダを選択
-
-コードを変更すると、自動的に拡張機能がリロードされます。
-
-### ビルド
-```bash
-# プロダクション用にビルド
-npm run build
-```
-
-ビルドされたファイルは`dist`フォルダに出力されます。
-
-## インストール方法
-
-1. **リポジトリのダウンロード**
-   - このリポジトリをクローンまたはダウンロード
-   ```bash
-   git clone git@github.com:iririn1998/text-highlighter.git
-   cd text-highlighter
-   npm install
-   npm run build
-   ```
-
-2. **Chrome拡張機能の開発者モードを有効化**
-   - Google Chromeを開く
-   - アドレスバーに `chrome://extensions/` と入力してアクセス
-   - 右上の「開発者モード」をONにする
-
-3. **拡張機能の読み込み**
-   - 「パッケージ化されていない拡張機能を読み込む」ボタンをクリック
-   - ビルドされた `dist` フォルダを選択
-   - 拡張機能が正常に読み込まれると、ツールバーにアイコンが表示されます
-
-## 使用方法
-
-### 基本的な使い方
-1. **テキストをハイライト**
-   - マウスドラッグでテキストを選択
-   - 右クリックでメニューから「ハイライトを追加」を押下
-
-2. **ハイライトを削除**
-   - ハイライト箇所をダブルクリック
-
-3. **色を設定**
-   - 拡張機能のポップアップから4色のプリセットカラーを選択
-   - 黄、緑、ピンク、青から選択可能
+| Language | Link |
+|----------|------|
+| 🇯🇵 日本語 | [docs/README_ja.md](docs/README_ja.md) |
+| 🇺🇸 English | [docs/README_en.md](docs/README_en.md) |
