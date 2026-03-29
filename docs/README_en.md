@@ -12,7 +12,7 @@
 
 ## ✨ Features
 
-- 🎨 **4 Preset Colors** — Choose from Yellow, Green, Pink, and Blue with one click
+- 🎨 **4 Preset Colors** — Choose from Yellow, Green, Red, and Blue with one click
 - 🖱️ **Context Menu Integration** — Select text and right-click to highlight
 - 🗑️ **Double-Click to Remove** — Easily remove highlights with a double-click
 - 💾 **Auto-Save Settings** — Your selected color is saved to Chrome Storage and synced across devices
@@ -33,7 +33,7 @@
 ### Build from Source
 
 ```bash
-git clone git@github.com:iririn1998/text-highlighter.git
+git clone https://github.com/iririn1998/text-highlighter.git
 cd text-highlighter
 npm install
 npm run build
@@ -61,7 +61,7 @@ npm run build
 ### Change Highlight Color
 
 1. Click the extension icon in the toolbar
-2. Choose your preferred color from the popup (Yellow, Green, Pink, or Blue)
+2. Choose your preferred color from the popup (Yellow, Green, Red, or Blue)
 3. Your selection is automatically saved
 
 ## 🛠️ Development
@@ -125,7 +125,3 @@ This extension is designed with user privacy as the top priority.
 - No data is transmitted to external servers
 
 For details, see [PRIVACY_POLICY.md](../PRIVACY_POLICY.md).
-
-## 📄 License
-
-This project is a private repository.
