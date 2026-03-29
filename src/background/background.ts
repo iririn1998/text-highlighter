@@ -3,12 +3,16 @@
  * コンテキストメニューの作成とメッセージハンドリングを担当
  */
 
+import { getTranslations } from '../shared/i18n';
+
 // 拡張機能インストール時または更新時に実行
 chrome.runtime.onInstalled.addListener(() => {
+  const t = getTranslations();
+
   // コンテキストメニューを作成
   chrome.contextMenus.create({
     id: 'add-highlight',
-    title: 'ハイライトを追加',
+    title: t.contextMenu.addHighlight,
     contexts: ['selection'],
   });
 });
@@ -27,7 +31,7 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
           data: { text: selectedText },
         })
         .catch((error) => {
-          console.error('メッセージ送信エラー:', error);
+          console.error('Failed to send message:', error);
         });
     }
   }
