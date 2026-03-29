@@ -8,6 +8,7 @@ import {
   DEFAULT_COLORS,
   STORAGE_KEY,
 } from '../shared/constants';
+import { getLocale, getTranslations } from '../shared/i18n';
 import type { ColorOption, StorageData } from '../shared/types';
 
 /**
@@ -48,6 +49,28 @@ const saveSelectedColor = async (color: ColorOption): Promise<void> => {
  */
 const initializeUI = async (): Promise<void> => {
   const currentColor = await getSelectedColor();
+  const t = getTranslations();
+  const locale = getLocale();
+
+  // HTMLのlang属性を設定
+  document.documentElement.lang = locale;
+
+  // テキストを翻訳で設定
+  const elementTranslations: Record<string, string> = {
+    subtitle: t.popup.subtitle,
+    colorSelectionTitle: t.popup.colorSelection,
+    howToUseTitle: t.popup.howToUse,
+    step1: t.popup.step1,
+    step2: t.popup.step2,
+    step3: t.popup.step3,
+  };
+
+  for (const [id, text] of Object.entries(elementTranslations)) {
+    const element = document.getElementById(id);
+    if (element) {
+      element.textContent = text;
+    }
+  }
 
   // カラーボタンを作成
   const colorGrid = document.getElementById('colorGrid');
@@ -64,7 +87,7 @@ const initializeUI = async (): Promise<void> => {
     button.className = 'color-button';
     button.style.backgroundColor = colorOption.value;
     button.setAttribute('data-color', colorOption.value);
-    button.textContent = colorOption.name;
+    button.textContent = t.colors[colorOption.id];
 
     // 現在選択されている色にはselectedクラスを追加
     if (colorOption.id === currentColor) {

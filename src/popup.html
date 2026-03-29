@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,21 +9,21 @@
 <body>
     <header class="header">
         <h1>Text Highlighter</h1>
-        <p>テキストをマーカーでハイライト</p>
+        <p id="subtitle"></p>
     </header>
 
     <main>
         <section class="section">
-            <h2 class="section-title">カラー選択</h2>
-            <div class="color-grid" id="colorGrid" />
+            <h2 class="section-title" id="colorSelectionTitle"></h2>
+            <div class="color-grid" id="colorGrid"></div>
         </section>
 
         <section class="instructions">
-            <h2>使い方</h2>
+            <h2 id="howToUseTitle"></h2>
             <ol>
-                <li>テキストを選択して右クリック</li>
-                <li>「ハイライトを追加」をクリック</li>
-                <li>削除はダブルクリック</li>
+                <li id="step1"></li>
+                <li id="step2"></li>
+                <li id="step3"></li>
             </ol>
         </section>
     </main>
