@@ -5,7 +5,7 @@ import { defineConfig } from 'vite';
 const manifest = defineManifest({
   manifest_version: 3,
   name: 'Text Highlighter',
-  version: '1.0.0',
+  version: '1.0.1',
   description: 'ウェブページ上のテキストをハイライトする拡張機能',
   permissions: ['activeTab', 'storage', 'contextMenus'],
   content_scripts: [
