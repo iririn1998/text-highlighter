@@ -48,10 +48,12 @@ const detectLocale = (): Locale => {
   return lang.startsWith('ja') ? 'ja' : 'en';
 };
 
+const detectedLocale = detectLocale();
+
 export const getTranslations = (): Translations => {
-  return translations[detectLocale()];
+  return translations[detectedLocale];
 };
 
 export const getLocale = (): Locale => {
-  return detectLocale();
+  return detectedLocale;
 };
