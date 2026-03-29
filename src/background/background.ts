@@ -5,16 +5,29 @@
 
 import { getTranslations } from '../shared/i18n';
 
-// 拡張機能インストール時または更新時に実行
-chrome.runtime.onInstalled.addListener(() => {
+/**
+ * コンテキストメニューを作成（または再作成）
+ */
+const createContextMenu = () => {
   const t = getTranslations();
 
-  // コンテキストメニューを作成
-  chrome.contextMenus.create({
-    id: 'add-highlight',
-    title: t.contextMenu.addHighlight,
-    contexts: ['selection'],
+  chrome.contextMenus.removeAll(() => {
+    chrome.contextMenus.create({
+      id: 'add-highlight',
+      title: t.contextMenu.addHighlight,
+      contexts: ['selection'],
+    });
   });
+};
+
+// 拡張機能インストール時または更新時に実行
+chrome.runtime.onInstalled.addListener(() => {
+  createContextMenu();
+});
+
+// ブラウザ起動時にコンテキストメニューを再作成（言語変更に対応）
+chrome.runtime.onStartup.addListener(() => {
+  createContextMenu();
 });
 
 // コンテキストメニューがクリックされたときの処理
