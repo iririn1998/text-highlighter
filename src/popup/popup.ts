@@ -56,23 +56,21 @@ const initializeUI = async (): Promise<void> => {
   document.documentElement.lang = locale;
 
   // テキストを翻訳で設定
-  const subtitle = document.getElementById('subtitle');
-  if (subtitle) subtitle.textContent = t.popup.subtitle;
+  const elementTranslations: Record<string, string> = {
+    subtitle: t.popup.subtitle,
+    colorSelectionTitle: t.popup.colorSelection,
+    howToUseTitle: t.popup.howToUse,
+    step1: t.popup.step1,
+    step2: t.popup.step2,
+    step3: t.popup.step3,
+  };
 
-  const colorSelectionTitle = document.getElementById('colorSelectionTitle');
-  if (colorSelectionTitle) colorSelectionTitle.textContent = t.popup.colorSelection;
-
-  const howToUseTitle = document.getElementById('howToUseTitle');
-  if (howToUseTitle) howToUseTitle.textContent = t.popup.howToUse;
-
-  const step1 = document.getElementById('step1');
-  if (step1) step1.textContent = t.popup.step1;
-
-  const step2 = document.getElementById('step2');
-  if (step2) step2.textContent = t.popup.step2;
-
-  const step3 = document.getElementById('step3');
-  if (step3) step3.textContent = t.popup.step3;
+  for (const [id, text] of Object.entries(elementTranslations)) {
+    const element = document.getElementById(id);
+    if (element) {
+      element.textContent = text;
+    }
+  }
 
   // カラーボタンを作成
   const colorGrid = document.getElementById('colorGrid');
